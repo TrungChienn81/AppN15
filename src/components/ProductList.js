@@ -1,6 +1,5 @@
-// src/components/ProductList.js
-import React, { useEffect, useState } from "react";
-import { FlatList, ActivityIndicator, View, Text, Image, Button, StyleSheet } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { FlatList, ActivityIndicator, View, Text, Image, Button, StyleSheet, Animated } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../context/CartContext";
 import { useSettings } from "../context/SettingsContext";
@@ -11,6 +10,7 @@ const ProductList = ({ apiUrl }) => {
   const { theme, language } = useSettings();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetch(apiUrl)
@@ -25,6 +25,14 @@ const ProductList = ({ apiUrl }) => {
       .finally(() => setLoading(false));
   }, [apiUrl]);
 
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   if (loading) {
     return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
   }
@@ -35,7 +43,7 @@ const ProductList = ({ apiUrl }) => {
       keyExtractor={(item, index) => (item._id ? `${item._id}_${index}` : `${index}`)}
       numColumns={2}
       renderItem={({ item }) => (
-        <View style={[styles.productContainer, theme === "dark" && styles.darkProductContainer]}>
+        <Animated.View style={[styles.productContainer, theme === "dark" && styles.darkProductContainer, { opacity: fadeAnim }]}>
           <Image source={{ uri: `http://10.0.2.2:3055${item.img}` }} style={styles.productImage} resizeMode="cover" />
           <Text style={[styles.productTitle, theme === "dark" && styles.darkText]}>{item.title}</Text>
           <Text style={[styles.productPrice, theme === "dark" && styles.darkText]}>{item.price?.toLocaleString()} đ</Text>
@@ -43,7 +51,7 @@ const ProductList = ({ apiUrl }) => {
             <Button title={language === "vi" ? "Xem chi tiết" : "View Details"} color="#6200EE" onPress={() => navigation.navigate("ProductDetail", { product: item })} />
             <Button title={language === "vi" ? "Thêm vào giỏ" : "Add to Cart"} color="#6200EE" onPress={() => addToCart(item)} />
           </View>
-        </View>
+        </Animated.View>
       )}
     />
   );
@@ -60,6 +68,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    transform: [{ scale: 1 }],
   },
   darkProductContainer: {
     backgroundColor: "#444",

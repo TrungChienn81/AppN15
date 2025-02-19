@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Button } from "react-native";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { useSettings } from "../context/SettingsContext";
 
 const HomeScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
-  const { language, theme, toggleTheme, changeLanguage } = useSettings();
+  const { language, theme } = useSettings();
 
   const handleSearch = () => {
     if (query.trim()) {
@@ -46,8 +46,6 @@ const HomeScreen = ({ navigation }) => {
         <Icon name="shopping-cart" size={20} color="#fff" style={styles.icon} />
         <Text style={styles.buttonText}>{language === "vi" ? "GIỎ HÀNG" : "CART"}</Text>
       </TouchableOpacity>
-      <Button title={language === "vi" ? "Đổi ngôn ngữ" : "Change Language"} onPress={() => changeLanguage(language === "vi" ? "en" : "vi")} />
-      <Button title={theme === "light" ? "Chuyển sang chế độ tối" : "Chuyển sang chế độ sáng"} onPress={toggleTheme} />
     </View>
   );
 };

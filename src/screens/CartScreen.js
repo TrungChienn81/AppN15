@@ -1,12 +1,12 @@
 import React from "react";
-import { View, Text, FlatList, Button } from "react-native";
+import { View, Text, FlatList, Button, StyleSheet } from "react-native";
 import { useCart } from "../context/CartContext";
 
 const CartScreen = () => {
     const { cartItems, removeFromCart, clearCart } = useCart();
 
     return (
-        <View style={{ flex: 1, padding: 20 }}>
+        <View style={styles.container}>
             <FlatList
                 data={cartItems}
                 keyExtractor={(item, index) => `${item._id}_${index}`}
@@ -22,5 +22,12 @@ const CartScreen = () => {
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 20,
+    },
+});
 
 export default CartScreen;
