@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.js
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -21,6 +20,11 @@ const HomeScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("TopRated")}>
         <Icon name="star" size={20} color="#fff" style={styles.icon} />
         <Text style={styles.buttonText}>SẢN PHẨM ĐÁNH GIÁ CAO</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Cart")}>
+        <Icon name="shopping-cart" size={20} color="#fff" style={styles.icon} />
+        <Text style={styles.buttonText}>GIỎ HÀNG</Text>
       </TouchableOpacity>
     </View>
   );

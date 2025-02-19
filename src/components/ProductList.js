@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { FlatList, ActivityIndicator, View, Text, Image, Button } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useCart } from "../context/CartContext";
 
 const ProductList = ({ apiUrl }) => {
   const navigation = useNavigation();
+  const { addToCart } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +38,7 @@ const ProductList = ({ apiUrl }) => {
           <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 5 }}>{item.title}</Text>
           <Text style={{ fontSize: 14, color: "green", marginVertical: 5 }}>{item.price?.toLocaleString()} đ</Text>
           <Button title="Xem chi tiết" color="#6200EE" onPress={() => navigation.navigate("ProductDetail", { product: item })} />
+          <Button title="Thêm vào giỏ" color="#6200EE" onPress={() => addToCart(item)} />
         </View>
       )}
     />
