@@ -17,6 +17,7 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import LogoutScreen from "../screens/LogoutScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
+import TopRatedScreen from "../screens/TopRatedScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -92,6 +93,10 @@ const AppNavigator = () => {
               <Stack.Screen name="MainTabs" component={MainTabs} />
               <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
               <Stack.Screen name="Search" component={SearchScreen} />
+              <Stack.Screen name="Pants" component={PantsScreen} />
+              <Stack.Screen name="Shirts" component={ShirtsScreen} />
+              <Stack.Screen name="TopRated" component={TopRatedScreen} />
+              <Stack.Screen name="Cart" component={CartScreen} />
             </>
           ) : (
             <>
