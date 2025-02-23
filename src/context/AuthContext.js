@@ -7,13 +7,15 @@ export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        const checkLoginStatus = async () => {
+        const initializeAuth = async () => {
+            // Clear AsyncStorage for a clean state
+            await AsyncStorage.clear();
             const token = await AsyncStorage.getItem("userToken");
             if (token) {
                 setIsLoggedIn(true);
             }
         };
-        checkLoginStatus();
+        initializeAuth();
     }, []);
 
     const login = async (token) => {
@@ -32,4 +34,5 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
 export const useAuth = () => useContext(AuthContext);

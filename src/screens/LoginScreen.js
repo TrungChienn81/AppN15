@@ -1,18 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Button } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
 const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const { login } = useAuth();
+    const { login, isLoggedIn } = useAuth();
 
-    const handleLogin = () => {
-        // Replace with actual login logic
+    useEffect(() => {
+        if (isLoggedIn) {
+            navigation.navigate("MainTabs");
+        }
+    }, [isLoggedIn, navigation]);
+
+    const handleLogin = async () => {
+        // Giả lập quá trình đăng nhập thành công
         const token = "dummy-token";
-        login(token);
-        navigation.navigate("HomeTabs");
+        await login(token); // Chờ cập nhật trạng thái isLoggedIn
+
+        // Đợi React Navigation cập nhật trước khi navigate
+        setTimeout(() => {
+            navigation.navigate("MainTabs");
+        }, 100);
     };
+
 
     return (
         <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
