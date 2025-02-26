@@ -21,6 +21,7 @@
     "react-native-country-flag": "^2.0.2",
     "react-native-flags": "^1.0.0",
     "react-native-gesture-handler": "^2.23.1",
+    "react-native-paper": "^5.13.1",
     "react-native-reanimated": "^3.16.7",
     "react-native-safe-area-context": "^5.2.0",
     "react-native-screens": "^4.7.0",
