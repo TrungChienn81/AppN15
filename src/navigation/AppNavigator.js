@@ -26,7 +26,7 @@ const MainTabs = () => {
   const { language } = useSettings();
 
   return (
-    <Tab.Navigator>
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen
         name={language === "vi" ? "Trang chủ" : "Home"}
         component={HomeScreen}

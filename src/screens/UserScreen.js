@@ -1,45 +1,86 @@
-import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Image, StyleSheet, ActivityIndicator } from "react-native";
 import { Button, List, Divider, Switch } from "react-native-paper";
+import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useSettings } from "../context/SettingsContext";
-import Icon from "react-native-vector-icons/FontAwesome5";
 
 const UserScreen = ({ navigation }) => {
-    const { logout } = useAuth();
+    const { logout, token } = useAuth();
     const { language, theme, toggleTheme, changeLanguage } = useSettings();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await axios.get("http://10.0.2.2:3055/v1/api/profile", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setUser(response.data); // Cập nhật state với dữ liệu từ API
+            } catch (error) {
+                console.error("Lỗi khi lấy thông tin người dùng:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, [token]);
 
     const handleLogout = () => {
         logout();
         navigation.navigate("Login");
     };
 
+    if (loading) {
+        return <ActivityIndicator size="large" color="#0000ff" />;
+    }
+
     return (
         <View style={[styles.container, theme === "dark" && styles.darkContainer]}>
             {/* Avatar + Thông tin cơ bản */}
             <View style={styles.profileHeader}>
                 <Image
-                    source={{ uri: "https://i.pravatar.cc/150?img=5" }}
+                    source={{ uri: user?.avatar || "https://i.pravatar.cc/150?img=5" }}
                     style={styles.avatar}
                 />
                 <Text style={[styles.name, theme === "dark" && styles.darkText]}>
-                    {language === "vi" ? "Nguyễn Văn A" : "John Doe"}
+                    {user?.name || (language === "vi" ? "Nguyễn Văn A" : "John Doe")}
                 </Text>
                 <Text style={[styles.email, theme === "dark" && styles.darkText]}>
-                    {language === "vi" ? "nguyenvana@example.com" : "johndoe@example.com"}
+                    {user?.email || "example@example.com"}
                 </Text>
             </View>
 
             {/* Danh sách thông tin */}
             <View style={styles.infoContainer}>
-                <List.Item title={language === "vi" ? "Số điện thoại" : "Phone Number"} description="+84 123 456 789" left={() => <List.Icon icon="phone" />} />
+                <List.Item
+                    title={language === "vi" ? "Số điện thoại" : "Phone Number"}
+                    description={user?.phone || "+84 123 456 789"}
+                    left={() => <List.Icon icon="phone" />}
+                />
                 <Divider />
-                <List.Item title={language === "vi" ? "Ngày sinh" : "Date of Birth"} description="01/01/2000" left={() => <List.Icon icon="calendar" />} />
+                <List.Item
+                    title={language === "vi" ? "Ngày sinh" : "Date of Birth"}
+                    description={user?.dob || "01/01/2000"}
+                    left={() => <List.Icon icon="calendar" />}
+                />
                 <Divider />
-                <List.Item title={language === "vi" ? "Đổi mật khẩu" : "Change Password"} left={() => <List.Icon icon="lock" />} onPress={() => navigation.navigate("ChangePassword")} />
+                <List.Item
+                    title={language === "vi" ? "Đổi mật khẩu" : "Change Password"}
+                    left={() => <List.Icon icon="lock" />}
+                    onPress={() => navigation.navigate("ChangePassword")}
+                />
                 <Divider />
-                <List.Item title={language === "vi" ? "Lịch sử đơn hàng" : "Order History"} left={() => <List.Icon icon="history" />} onPress={() => navigation.navigate("OrderHistory")} />
+                <List.Item
+                    title={language === "vi" ? "Lịch sử đơn hàng" : "Order History"}
+                    left={() => <List.Icon icon="history" />}
+                    onPress={() => navigation.navigate("OrderHistory")}
+                />
                 <Divider />
                 <List.Item
                     title={language === "vi" ? "Thông báo" : "Notifications"}
