@@ -19,6 +19,11 @@ import LogoutScreen from "../screens/LogoutScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import TopRatedScreen from "../screens/TopRatedScreen";
 
+// Import additional category screens
+import DressScreen from "../screens/DressScreen";
+import ShoesScreen from "../screens/ShoesScreen";
+import BagsScreen from "../screens/BagsScreen";
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -32,9 +37,7 @@ const MainTabs = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: language === "vi" ? "Trang chủ" : "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -42,9 +45,7 @@ const MainTabs = () => {
         component={PantsScreen}
         options={{
           tabBarLabel: language === "vi" ? "Quần" : "Pants",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="shopping-bag" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="shopping-bag" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -52,9 +53,7 @@ const MainTabs = () => {
         component={ShirtsScreen}
         options={{
           tabBarLabel: language === "vi" ? "Áo" : "Shirts",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="tshirt" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="tshirt" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -62,9 +61,7 @@ const MainTabs = () => {
         component={CartScreen}
         options={{
           tabBarLabel: language === "vi" ? "Giỏ hàng" : "Cart",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="shopping-cart" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="shopping-cart" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -72,9 +69,7 @@ const MainTabs = () => {
         component={UserScreen}
         options={{
           tabBarLabel: language === "vi" ? "Người dùng" : "User",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="user" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} />,
         }}
       />
     </Tab.Navigator>
@@ -95,8 +90,12 @@ const AppNavigator = () => {
               <Stack.Screen name="Search" component={SearchScreen} />
               <Stack.Screen name="Pants" component={PantsScreen} />
               <Stack.Screen name="Shirts" component={ShirtsScreen} />
+              <Stack.Screen name="DressScreen" component={DressScreen} />
+              <Stack.Screen name="ShoesScreen" component={ShoesScreen} />
+              <Stack.Screen name="BagsScreen" component={BagsScreen} />
               <Stack.Screen name="TopRated" component={TopRatedScreen} />
               <Stack.Screen name="Cart" component={CartScreen} />
+              <Stack.Screen name="Logout" component={LogoutScreen} />
             </>
           ) : (
             <>
