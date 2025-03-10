@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, Alert } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Button, List, Divider, Switch } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
 import { useSettings } from "../context/SettingsContext";
 import Icon from "react-native-vector-icons/FontAwesome5";
 
-const UserScreen = ({ navigation }) => {
+const UserProfileScreen = ({ navigation }) => {
     const { logout } = useAuth();
-    const { language, theme, toggleTheme, changeLanguage } = useSettings();
+    const { theme, toggleTheme } = useSettings();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
     const handleLogout = () => {
@@ -23,26 +23,22 @@ const UserScreen = ({ navigation }) => {
                     source={{ uri: "https://i.pravatar.cc/150?img=5" }}
                     style={styles.avatar}
                 />
-                <Text style={[styles.name, theme === "dark" && styles.darkText]}>
-                    {language === "vi" ? "Nguyễn Văn A" : "John Doe"}
-                </Text>
-                <Text style={[styles.email, theme === "dark" && styles.darkText]}>
-                    {language === "vi" ? "nguyenvana@example.com" : "johndoe@example.com"}
-                </Text>
+                <Text style={[styles.name, theme === "dark" && styles.darkText]}>Nguyễn Văn A</Text>
+                <Text style={[styles.email, theme === "dark" && styles.darkText]}>nguyenvana@example.com</Text>
             </View>
 
             {/* Danh sách thông tin */}
             <View style={styles.infoContainer}>
-                <List.Item title={language === "vi" ? "Số điện thoại" : "Phone Number"} description="+84 123 456 789" left={() => <List.Icon icon="phone" />} />
+                <List.Item title="Số điện thoại" description="+84 123 456 789" left={() => <List.Icon icon="phone" />} />
                 <Divider />
-                <List.Item title={language === "vi" ? "Ngày sinh" : "Date of Birth"} description="01/01/2000" left={() => <List.Icon icon="calendar" />} />
+                <List.Item title="Ngày sinh" description="01/01/2000" left={() => <List.Icon icon="calendar" />} />
                 <Divider />
-                <List.Item title={language === "vi" ? "Đổi mật khẩu" : "Change Password"} left={() => <List.Icon icon="lock" />} onPress={() => navigation.navigate("ChangePassword")} />
+                <List.Item title="Đổi mật khẩu" left={() => <List.Icon icon="lock" />} onPress={() => navigation.navigate("ChangePassword")} />
                 <Divider />
-                <List.Item title={language === "vi" ? "Lịch sử đơn hàng" : "Order History"} left={() => <List.Icon icon="history" />} onPress={() => navigation.navigate("OrderHistory")} />
+                <List.Item title="Lịch sử đơn hàng" left={() => <List.Icon icon="history" />} onPress={() => navigation.navigate("OrderHistory")} />
                 <Divider />
                 <List.Item
-                    title={language === "vi" ? "Thông báo" : "Notifications"}
+                    title="Thông báo"
                     left={() => <List.Icon icon="bell" />}
                     right={() => (
                         <Switch
@@ -53,7 +49,7 @@ const UserScreen = ({ navigation }) => {
                 />
                 <Divider />
                 <List.Item
-                    title={language === "vi" ? "Chế độ tối" : "Dark Mode"}
+                    title="Chế độ tối"
                     left={() => <List.Icon icon="theme-light-dark" />}
                     right={() => (
                         <Switch
@@ -62,17 +58,11 @@ const UserScreen = ({ navigation }) => {
                         />
                     )}
                 />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Tiếng Việt" : "English"}
-                    left={() => <List.Icon icon="translate" />}
-                    onPress={() => changeLanguage(language === "vi" ? "en" : "vi")}
-                />
             </View>
 
             {/* Nút Logout */}
             <Button mode="contained" style={styles.logoutButton} onPress={handleLogout}>
-                {language === "vi" ? "Đăng xuất" : "Logout"}
+                Đăng xuất
             </Button>
         </View>
     );
@@ -90,4 +80,4 @@ const styles = StyleSheet.create({
     logoutButton: { marginTop: 20, backgroundColor: "#ff4d4d" },
 });
 
-export default UserScreen;
+export default UserProfileScreen;
