@@ -8,24 +8,44 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const initializeAuth = async () => {
-            // Clear AsyncStorage for a clean state
-            await AsyncStorage.clear();
-            const token = await AsyncStorage.getItem("userToken");
-            if (token) {
-                setIsLoggedIn(true);
+            try {
+                const token = await AsyncStorage.getItem("userToken");
+                console.log("🔑 Token from storage:", token);
+
+                if (token) {
+                    setIsLoggedIn(true);
+                }
+            } catch (error) {
+                console.error("❌ Error reading AsyncStorage:", error);
             }
         };
+
         initializeAuth();
     }, []);
 
     const login = async (token) => {
-        await AsyncStorage.setItem("userToken", token);
-        setIsLoggedIn(true);
+        if (!token) {
+            console.error("❌ Token is undefined, cannot store in AsyncStorage");
+            return;
+        }
+
+        try {
+            await AsyncStorage.setItem("userToken", token);
+            console.log("✅ Token saved successfully!");
+            setIsLoggedIn(true);
+        } catch (error) {
+            console.error("❌ AsyncStorage error during login:", error);
+        }
     };
 
     const logout = async () => {
-        await AsyncStorage.removeItem("userToken");
-        setIsLoggedIn(false);
+        try {
+            await AsyncStorage.removeItem("userToken");
+            console.log("🚪 Logged out, token removed!");
+            setIsLoggedIn(false);
+        } catch (error) {
+            console.error("❌ AsyncStorage error during logout:", error);
+        }
     };
 
     return (
