@@ -25,7 +25,6 @@ const LoginScreen = ({ navigation }) => {
             Alert.alert("Login Failed", "Email and password are required.");
             return;
         }
-
         try {
             console.log("📩 Sending login request...");
             console.log("👉 Email:", email);
