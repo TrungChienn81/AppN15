@@ -13,9 +13,18 @@ export const AuthProvider = ({ children }) => {
                 const storedToken = await AsyncStorage.getItem("userToken");
                 console.log("🔑 Token from storage:", storedToken);
 
-                if (storedToken) {
-                    setToken(storedToken);
-                    setIsLoggedIn(true);
+                if (storedToken && storedToken !== "null" && storedToken !== "undefined") {
+                    // Validate token format before setting
+                    if (typeof storedToken === 'string' && storedToken.trim() !== '') {
+                        setToken(storedToken);
+                        setIsLoggedIn(true);
+                        console.log("✅ User authenticated with stored token");
+                    } else {
+                        console.error("❌ Invalid token format in storage");
+                        await AsyncStorage.removeItem("userToken");
+                    }
+                } else {
+                    console.log("ℹ️ No token found, user not authenticated");
                 }
             } catch (error) {
                 console.error("❌ Error reading AsyncStorage:", error);
@@ -32,6 +41,13 @@ export const AuthProvider = ({ children }) => {
         }
 
         try {
+            // Double-check the token structure
+            const parts = newToken.split('.');
+            if (parts.length !== 3) {
+                console.error("❌ Token format is invalid (not a proper JWT)");
+                return;
+            }
+
             await AsyncStorage.setItem("userToken", newToken);
             console.log("✅ Token saved successfully!");
             setToken(newToken);
