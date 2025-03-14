@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import axios from "axios";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import { useAuth } from "../context/AuthContext";
 
 const ChangePasswordScreen = ({ navigation }) => {
     const [currentPassword, setCurrentPassword] = useState("");
@@ -9,10 +11,26 @@ const ChangePasswordScreen = ({ navigation }) => {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+    const { token } = useAuth();
 
-    const handleChangePassword = () => {
+    const validatePassword = (password) => {
+        // Kiểm tra không có khoảng trắng
+        if (password.includes(" ")) {
+            return false;
+        }
+
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+        return passwordRegex.test(password);
+    };
+
+    const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmNewPassword) {
             Alert.alert("Change Password Failed", "All fields are required.");
+            return;
+        }
+
+        if (newPassword === currentPassword) {
+            Alert.alert("Change Password Failed", "New password cannot be the same as the current password.");
             return;
         }
 
@@ -21,10 +39,35 @@ const ChangePasswordScreen = ({ navigation }) => {
             return;
         }
 
-        // Add logic to change password here
+        if (!validatePassword(newPassword)) {
+            Alert.alert("Change Password Failed", "New password must be at least 6 characters long, contain no spaces, start with an uppercase letter, and include a special character.");
+            return;
+        }
 
-        Alert.alert("Change Password Successful", "Your password has been changed.");
-        navigation.navigate("UserProfile");
+        try {
+            const response = await axios.post("http://localhost:3055/v1/api/reset-password", {
+                currentPassword,
+                newPassword,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.data.success) {
+                Alert.alert("Change Password Successful", "Your password has been changed.");
+                navigation.navigate("UserProfile");
+            } else {
+                Alert.alert("Change Password Failed", response.data.message || "Failed to change password.");
+            }
+        } catch (error) {
+            console.error("Change password error:", error);
+            if (error.response && error.response.data) {
+                Alert.alert("Change Password Failed", error.response.data.message || "An error occurred. Please try again.");
+            } else {
+                Alert.alert("Change Password Failed", "An error occurred. Please try again.");
+            }
+        }
     };
 
     return (

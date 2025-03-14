@@ -23,6 +23,7 @@ import TopRatedScreen from "../screens/TopRatedScreen";
 import DressScreen from "../screens/DressScreen";
 import ShoesScreen from "../screens/ShoesScreen";
 import BagsScreen from "../screens/BagsScreen";
+import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -96,6 +97,7 @@ const AppNavigator = () => {
               <Stack.Screen name="TopRated" component={TopRatedScreen} />
               <Stack.Screen name="Cart" component={CartScreen} />
               <Stack.Screen name="Logout" component={LogoutScreen} />
+              <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
             </>
           ) : (
             <>

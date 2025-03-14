@@ -5,14 +5,16 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [token, setToken] = useState(null);
 
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                const token = await AsyncStorage.getItem("userToken");
-                console.log("🔑 Token from storage:", token);
+                const storedToken = await AsyncStorage.getItem("userToken");
+                console.log("🔑 Token from storage:", storedToken);
 
-                if (token) {
+                if (storedToken) {
+                    setToken(storedToken);
                     setIsLoggedIn(true);
                 }
             } catch (error) {
@@ -23,15 +25,16 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
     }, []);
 
-    const login = async (token) => {
-        if (!token) {
-            console.error("❌ Token is undefined, cannot store in AsyncStorage");
+    const login = async (newToken) => {
+        if (!newToken || newToken === "null" || newToken === "undefined") {
+            console.error("❌ Token is invalid, cannot store in AsyncStorage");
             return;
         }
 
         try {
-            await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("userToken", newToken);
             console.log("✅ Token saved successfully!");
+            setToken(newToken);
             setIsLoggedIn(true);
         } catch (error) {
             console.error("❌ AsyncStorage error during login:", error);
@@ -42,6 +45,7 @@ export const AuthProvider = ({ children }) => {
         try {
             await AsyncStorage.removeItem("userToken");
             console.log("🚪 Logged out, token removed!");
+            setToken(null);
             setIsLoggedIn(false);
         } catch (error) {
             console.error("❌ AsyncStorage error during logout:", error);
@@ -49,7 +53,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+        <AuthContext.Provider value={{ isLoggedIn, token, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

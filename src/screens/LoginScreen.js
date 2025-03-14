@@ -32,10 +32,10 @@ const LoginScreen = ({ navigation }) => {
 
             const response = await axios.post("http://10.0.2.2:3055/v1/api/login", { email, password });
 
-            console.log("✅ API Response:", response.data); // Kiểm tra response API
+            console.log("✅ API Response:", response.data); // Check API response
             console.log("✅ Full API Response:", JSON.stringify(response.data, null, 2));
 
-            const token = response.data.data.tokens.accessToken; // ✅ Lấy token từ data
+            const token = response.data.data.tokens.accessToken; // Get token from data
 
             if (!token) {
                 console.error("❌ Token not found in response:", response.data);
@@ -44,7 +44,6 @@ const LoginScreen = ({ navigation }) => {
             }
 
             await login(token);
-            navigation.replace("MainTabs");
         } catch (error) {
             if (error.response) {
                 // The request was made and the server responded with a status code

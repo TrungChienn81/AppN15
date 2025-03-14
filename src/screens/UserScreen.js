@@ -1,134 +1,161 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Image, StyleSheet, ActivityIndicator } from "react-native";
-import { Button, List, Divider, Switch } from "react-native-paper";
-import axios from "axios";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useSettings } from "../context/SettingsContext";
+import { useAuth } from "../context/AuthContext";
+import Icon from "react-native-vector-icons/FontAwesome5";
+import CountryFlag from "react-native-country-flag"; // Ensure this package is installed
+import axios from "axios";
 
 const UserScreen = ({ navigation }) => {
-    const { logout, token } = useAuth();
     const { language, theme, toggleTheme, changeLanguage } = useSettings();
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { logout, token } = useAuth();
+    const [user, setUser] = useState({ name: "", email: "", phone: "" });
 
     useEffect(() => {
         const fetchUserData = async () => {
+            if (!token || token === "null" || token === "undefined") {
+                console.warn("⚠️ No valid token found, redirecting to login...");
+                navigation.navigate("Login");
+                return;
+            }
+
+            console.log("🔑 Using token:", token);
+
             try {
                 const response = await axios.get("http://10.0.2.2:3055/v1/api/profile", {
                     headers: {
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`, // ✅ Ensure correct format
                     },
                 });
-                setUser(response.data); // Cập nhật state với dữ liệu từ API
+
+                console.log("✅ User data:", response.data);
+                setUser({
+                    name: response.data.userName,
+                    email: response.data.email,
+                    phone: response.data.phone
+                });
+
             } catch (error) {
-                console.error("Lỗi khi lấy thông tin người dùng:", error);
-            } finally {
-                setLoading(false);
+                console.error("❌ Error fetching user data:", error);
+
+                if (error.response?.status === 401) {
+                    console.log("❌ Unauthorized, logging out...");
+                    Alert.alert("Error", "Unauthorized access. Please log in again.");
+                    logout();
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: "Login" }]
+                    });
+                } else {
+                    Alert.alert("Error", error.response?.data?.message || "An error occurred. Please try again.");
+                }
             }
         };
 
         fetchUserData();
-    }, [token]);
+    }, [token, navigation]); // ✅ Add navigation dependency
 
-    const handleLogout = () => {
-        logout();
-        navigation.navigate("Login");
+    const getLanguageFlag = () => {
+        return language === "vi" ? "VN" : "US";
     };
 
-    if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
-    }
+    const getThemeIcon = () => {
+        return theme === "light" ? "sun" : "moon";
+    };
 
     return (
         <View style={[styles.container, theme === "dark" && styles.darkContainer]}>
-            {/* Avatar + Thông tin cơ bản */}
-            <View style={styles.profileHeader}>
-                <Image
-                    source={{ uri: user?.avatar || "https://i.pravatar.cc/150?img=5" }}
-                    style={styles.avatar}
-                />
-                <Text style={[styles.name, theme === "dark" && styles.darkText]}>
-                    {user?.name || (language === "vi" ? "Nguyễn Văn A" : "John Doe")}
-                </Text>
-                <Text style={[styles.email, theme === "dark" && styles.darkText]}>
-                    {user?.email || "example@example.com"}
-                </Text>
-            </View>
+            <Text style={[styles.title, theme === "dark" && styles.darkText]}>
+                {language === "vi" ? "Cài đặt người dùng" : "User Settings"}
+            </Text>
+            <Text style={styles.label}>{language === "vi" ? "Tên: " : "Name: "}{user.name}</Text>
+            <Text style={styles.label}>{language === "vi" ? "Email: " : "Email: "}{user.email}</Text>
+            <Text style={styles.label}>{language === "vi" ? "Số điện thoại: " : "Phone: "}{user.phone}</Text>
 
-            {/* Danh sách thông tin */}
-            <View style={styles.infoContainer}>
-                <List.Item
-                    title={language === "vi" ? "Số điện thoại" : "Phone Number"}
-                    description={user?.phone || "+84 123 456 789"}
-                    left={() => <List.Icon icon="phone" />}
-                />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Ngày sinh" : "Date of Birth"}
-                    description={user?.dob || "01/01/2000"}
-                    left={() => <List.Icon icon="calendar" />}
-                />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Đổi mật khẩu" : "Change Password"}
-                    left={() => <List.Icon icon="lock" />}
-                    onPress={() => navigation.navigate("ChangePassword")}
-                />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Lịch sử đơn hàng" : "Order History"}
-                    left={() => <List.Icon icon="history" />}
-                    onPress={() => navigation.navigate("OrderHistory")}
-                />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Thông báo" : "Notifications"}
-                    left={() => <List.Icon icon="bell" />}
-                    right={() => (
-                        <Switch
-                            value={notificationsEnabled}
-                            onValueChange={() => setNotificationsEnabled(!notificationsEnabled)}
-                        />
-                    )}
-                />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Chế độ tối" : "Dark Mode"}
-                    left={() => <List.Icon icon="theme-light-dark" />}
-                    right={() => (
-                        <Switch
-                            value={theme === "dark"}
-                            onValueChange={toggleTheme}
-                        />
-                    )}
-                />
-                <Divider />
-                <List.Item
-                    title={language === "vi" ? "Tiếng Việt" : "English"}
-                    left={() => <List.Icon icon="translate" />}
-                    onPress={() => changeLanguage(language === "vi" ? "en" : "vi")}
-                />
-            </View>
-
-            {/* Nút Logout */}
-            <Button mode="contained" style={styles.logoutButton} onPress={handleLogout}>
-                {language === "vi" ? "Đăng xuất" : "Logout"}
-            </Button>
+            <TouchableOpacity style={styles.button} onPress={() => changeLanguage(language === "vi" ? "en" : "vi")}>
+                <CountryFlag isoCode={getLanguageFlag()} size={20} style={styles.icon} />
+                <Text style={styles.buttonText}>{language === "vi" ? "Tiếng Việt" : "English"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={toggleTheme}>
+                <Icon name={getThemeIcon()} size={20} color="#fff" style={styles.icon} />
+                <Text style={styles.buttonText}>{theme === "light" ? "Light Mode" : "Dark Mode"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("ChangePassword")}>
+                <Icon name="key" size={20} color="#fff" style={styles.icon} />
+                <Text style={styles.buttonText}>{language === "vi" ? "Đổi mật khẩu" : "Change Password"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutButton} onPress={() => {
+                logout();
+                navigation.navigate("Login"); // Navigate to Login screen after logout
+            }}>
+                <Icon name="sign-out-alt" size={20} color="#fff" style={styles.icon} />
+                <Text style={styles.buttonText}>{language === "vi" ? "Đăng xuất" : "Logout"}</Text>
+            </TouchableOpacity>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fff", padding: 20 },
-    darkContainer: { backgroundColor: "#333" },
-    profileHeader: { alignItems: "center", marginBottom: 20 },
-    avatar: { width: 100, height: 100, borderRadius: 50 },
-    name: { fontSize: 20, fontWeight: "bold", marginTop: 10 },
-    email: { fontSize: 14, color: "gray" },
-    darkText: { color: "#fff" },
-    infoContainer: { backgroundColor: "#f9f9f9", borderRadius: 10, paddingVertical: 10 },
-    logoutButton: { marginTop: 20, backgroundColor: "#ff4d4d" },
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#F5F5F5",
+        padding: 20,
+    },
+    darkContainer: {
+        backgroundColor: "#333",
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 30,
+        color: "#333",
+    },
+    darkText: {
+        color: "#fff",
+    },
+    label: {
+        fontSize: 18,
+        marginBottom: 10,
+        color: "#333",
+    },
+    button: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#6A5ACD",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        marginVertical: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    logoutButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#FF6347",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        marginVertical: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    icon: {
+        marginRight: 10,
+    },
+    buttonText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#fff",
+    },
 });
 
 export default UserScreen;
