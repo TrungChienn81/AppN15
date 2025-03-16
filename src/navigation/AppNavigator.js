@@ -19,6 +19,15 @@ import LogoutScreen from "../screens/LogoutScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import TopRatedScreen from "../screens/TopRatedScreen";
 
+<<<<<<< HEAD
+=======
+// Import additional category screens
+import DressScreen from "../screens/DressScreen";
+import ShoesScreen from "../screens/ShoesScreen";
+import BagsScreen from "../screens/BagsScreen";
+import ChangePasswordScreen from "../screens/ChangePasswordScreen";
+
+>>>>>>> a119fbfa1164c7823adba9992955ec7cd1678420
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -97,6 +106,11 @@ const AppNavigator = () => {
               <Stack.Screen name="Shirts" component={ShirtsScreen} />
               <Stack.Screen name="TopRated" component={TopRatedScreen} />
               <Stack.Screen name="Cart" component={CartScreen} />
+<<<<<<< HEAD
+=======
+              <Stack.Screen name="Logout" component={LogoutScreen} />
+              <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+>>>>>>> a119fbfa1164c7823adba9992955ec7cd1678420
             </>
           ) : (
             <>
