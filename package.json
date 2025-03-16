@@ -15,18 +15,16 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
-<<<<<<< HEAD
-    "axios": "^1.8.2",
-=======
     "axios": "^1.4.0",
     "base-64": "^1.0.0",
->>>>>>> a119fbfa1164c7823adba9992955ec7cd1678420
     "react": "^18.3.1",
     "react-native": "^0.77.0",
     "react-native-animatable": "^1.4.0",
     "react-native-country-flag": "^2.0.2",
     "react-native-flags": "^1.0.0",
     "react-native-gesture-handler": "^2.23.1",
+    "react-native-image-viewing": "^0.2.2",
+    "react-native-image-zoom-viewer": "^3.0.1",
     "react-native-paper": "^5.13.1",
     "react-native-reanimated": "^3.16.7",
     "react-native-safe-area-context": "^5.2.0",

@@ -19,15 +19,11 @@ import LogoutScreen from "../screens/LogoutScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import TopRatedScreen from "../screens/TopRatedScreen";
 
-<<<<<<< HEAD
-=======
-// Import additional category screens
+// Bỏ comment các import
 import DressScreen from "../screens/DressScreen";
 import ShoesScreen from "../screens/ShoesScreen";
 import BagsScreen from "../screens/BagsScreen";
-import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 
->>>>>>> a119fbfa1164c7823adba9992955ec7cd1678420
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -94,39 +90,80 @@ const AppNavigator = () => {
   const { isLoggedIn } = useAuth();
 
   return (
-    <SettingsProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {isLoggedIn ? (
-            <>
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-              <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-              <Stack.Screen name="Search" component={SearchScreen} />
-              <Stack.Screen name="Pants" component={PantsScreen} />
-              <Stack.Screen name="Shirts" component={ShirtsScreen} />
-              <Stack.Screen name="TopRated" component={TopRatedScreen} />
-              <Stack.Screen name="Cart" component={CartScreen} />
-<<<<<<< HEAD
-=======
-              <Stack.Screen name="Logout" component={LogoutScreen} />
-              <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
->>>>>>> a119fbfa1164c7823adba9992955ec7cd1678420
-            </>
-          ) : (
-            <>
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Register" component={RegisterScreen} />
-            </>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SettingsProvider>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isLoggedIn ? (
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen 
+              name="ProductDetail" 
+              component={ProductDetailScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="Search" 
+              component={SearchScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="Pants" 
+              component={PantsScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="Shirts" 
+              component={ShirtsScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="TopRated" 
+              component={TopRatedScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="Cart" 
+              component={CartScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="Logout" 
+              component={LogoutScreen} 
+              options={{ headerShown: true }}
+            />
+            
+            {/* Thêm các màn hình */}
+            <Stack.Screen 
+              name="DressScreen" 
+              component={DressScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="ShoesScreen" 
+              component={ShoesScreen} 
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen 
+              name="BagsScreen" 
+              component={BagsScreen} 
+              options={{ headerShown: true }}
+            />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 
 const App = () => (
   <AuthProvider>
-    <AppNavigator />
+    <SettingsProvider>
+      <AppNavigator />
+    </SettingsProvider>
   </AuthProvider>
 );
 
