@@ -12,6 +12,7 @@ import {
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../context/CartContext";
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
 
 const ProductDetailScreen = ({ route }) => {
   const { product } = route.params;
@@ -22,7 +23,6 @@ const ProductDetailScreen = ({ route }) => {
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-
   // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = (size) => {
     if (!size) {
@@ -62,7 +62,7 @@ const ProductDetailScreen = ({ route }) => {
     }
   };
 
-  
+
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
@@ -169,6 +169,22 @@ const ProductDetailScreen = ({ route }) => {
         <Text style={styles.productTitle}>{product.title}</Text>
         <Text style={styles.productPrice}>{product.price?.toLocaleString()} đ</Text>
 
+        {/* Thêm phần rating */}
+        <View style={styles.ratingContainer}>
+          <StarRatingDisplay
+            rating={product.avgReview || 0}
+            color="#FFD700"
+            emptyColor="#ddd"
+            starSize={20}
+            maxStars={5}
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.ratingText}>
+            {product.avgReview ? `${product.avgReview}/5` : 'Chưa có đánh giá'}
+            {product.reviews && product.reviews.length > 0 ? ` (${product.reviews.length} đánh giá)` : ''}
+          </Text>
+        </View>
+
         {/* Kích thước và tình trạng kho */}
         <View style={styles.sizeContainer}>
           {product.sizes && product.sizes.length > 0 ? (
@@ -198,7 +214,28 @@ const ProductDetailScreen = ({ route }) => {
             <Text>Không có thông tin kích thước</Text>
           )}
         </View>
-
+        {product.reviews && product.reviews.length > 0 && (
+          <View style={styles.reviewsContainer}>
+            <Text style={styles.reviewsTitle}>ĐÁNH GIÁ SẢN PHẨM</Text>
+            {product.reviews.map((review, index) => (
+              <View key={index} style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  <StarRatingDisplay
+                    rating={review.rating}
+                    color="#FFD700"
+                    emptyColor="#ddd"
+                    starSize={16}
+                    maxStars={5}
+                  />
+                  <Text style={styles.reviewDate}>
+                    {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                  </Text>
+                </View>
+                <Text style={styles.reviewComment}>{review.comment}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <Text style={styles.productCode}>Mã số: #{product._id?.substring(0, 7) || "0024228"}</Text>
         <Text style={styles.productFullTitle}>{product.title}</Text>
@@ -446,6 +483,44 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  reviewsContainer: {
+    padding: 15,
+    backgroundColor: "#fff",
+    marginTop: 10,
+  },
+  reviewsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  reviewItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#888',
+  },
+  reviewComment: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 

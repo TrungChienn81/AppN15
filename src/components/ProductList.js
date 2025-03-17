@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../context/CartContext";
 import { useSettings } from "../context/SettingsContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
 
 const ProductList = ({ apiUrl, products: initialProducts }) => {
   const navigation = useNavigation();
@@ -35,7 +36,7 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
         const response = await fetch(apiUrl);
         const data = await response.json();
         console.log("Dữ liệu API:", JSON.stringify(data, null, 2));
-        
+
         if (data.status === 200) {
           // Xử lý cho cả hai loại endpoint
           if (Array.isArray(data.data)) {
@@ -60,7 +61,7 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
         setLoading(false);
       }
     };
-    
+
     if (apiUrl) {
       fetchData();
     }
@@ -69,7 +70,7 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
   // Kiểm tra xem sản phẩm có hết hàng không
   const isOutOfStock = (product) => {
     if (!product.sizes || product.sizes.length === 0) return false;
-    
+
     // Kiểm tra xem tất cả các size đều có số lượng = 0
     return product.sizes.every(size => size.quantity === 0);
   };
@@ -92,7 +93,7 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
 
   const renderItem = ({ item }) => {
     if (!item || typeof item !== "object") return null;
-    
+
     // Xử lý URL ảnh
     let imageSource;
     if (item.img) {
@@ -110,9 +111,9 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
       // Thay vì sử dụng ảnh mặc định, sử dụng một màu nền
       imageSource = { uri: 'https://via.placeholder.com/150' };
     }
-    
+
     const outOfStock = isOutOfStock(item);
-    
+
     return (
       <View style={[styles.productContainer, theme === "dark" && styles.darkProductContainer]}>
         <View style={styles.imageContainer}>
@@ -124,34 +125,48 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
               console.log("Lỗi tải ảnh:", item.title, item.img || item.image);
             }}
           />
-          
+
           {outOfStock && (
             <View style={styles.outOfStockBadge}>
               <Text style={styles.outOfStockText}>Hết hàng</Text>
             </View>
           )}
         </View>
-        
+
         <Text style={[styles.productTitle, theme === "dark" && styles.darkText]} numberOfLines={2}>
           {item.title}
         </Text>
-        
+
         <Text style={styles.productPrice}>
           {item.price?.toLocaleString()} đ
         </Text>
-        
+        {/* Thêm phần rating */}
+        <View style={styles.ratingContainer}>
+          <StarRatingDisplay
+            rating={item.avgReview || 0}
+            color="#FFD700"
+            emptyColor="#ddd"
+            starSize={14}
+            maxStars={5}
+          />
+          {item.avgReview > 0 && (
+            <Text style={styles.ratingText}>{item.avgReview}</Text>
+          )}
+        </View>
+
+
         <View style={styles.sizeContainer}>
           {Array.isArray(item.sizes) && item.sizes.length > 0 ? (
             item.sizes.map((sizeObj, index) => (
               <View key={index} style={[
-                styles.sizeTag, 
+                styles.sizeTag,
                 sizeObj.quantity === 0 && styles.outOfStockSizeTag
               ]}>
                 {sizeObj.quantity === 0 ? (
                   <View style={styles.crossLine}></View>
                 ) : null}
                 <Text style={[
-                  styles.sizeText, 
+                  styles.sizeText,
                   sizeObj.quantity === 0 && styles.outOfStockSizeText
                 ]}>
                   {sizeObj.size}
@@ -164,9 +179,9 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
             </Text>
           )}
         </View>
-        
+
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.navigate("ProductDetail", { product: item })}
           >
@@ -174,8 +189,8 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
               {language === "vi" ? "Xem chi tiết" : "View Details"}
             </Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.button, outOfStock && styles.disabledButton]}
             onPress={() => !outOfStock && addToCart(item)}
             disabled={outOfStock}
@@ -192,7 +207,7 @@ const ProductList = ({ apiUrl, products: initialProducts }) => {
   return (
     <FlatList
       data={products}
-      keyExtractor={(item, index) => 
+      keyExtractor={(item, index) =>
         item._id ? `${item._id}_${index}` : `${index}`
       }
       numColumns={2}
@@ -284,7 +299,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     textAlign: "center",
   },
-  
+
   sizeContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -349,6 +364,17 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
   },
 });
 
