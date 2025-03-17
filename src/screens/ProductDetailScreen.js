@@ -22,20 +22,20 @@ const ProductDetailScreen = ({ route }) => {
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = (size) => {
     if (!size) {
       Alert.alert("Lỗi", "Vui lòng chọn kích thước");
       return;
     }
-    
+
     addToCart({
       ...product,
       quantity: 1,
       size: size
     });
-    
+
     Alert.alert(
       "Thành công",
       "Đã thêm sản phẩm vào giỏ hàng",
@@ -62,22 +62,20 @@ const ProductDetailScreen = ({ route }) => {
     }
   };
 
-  // Lấy các sản phẩm cùng loại
+  
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
         let apiUrl = "";
-        // Xác định loại sản phẩm từ tên hoặc category
         if (product.title.toLowerCase().includes("áo")) {
-          apiUrl = "http://10.0.2.2:3055/v1/api/product-type/áo";
+          apiUrl = "http://10.0.2.2:3055/v1/api/product?page=1&limit=12&priceRange=0%2C10000000000&status=&category=67b87add4c53e8e91ac4511c&searchText=";
         } else if (product.title.toLowerCase().includes("quần")) {
-          apiUrl = "http://10.0.2.2:3055/v1/api/product-type/quần";
+          apiUrl = "http://10.0.2.2:3055/v1/api/product?page=1&limit=12&priceRange=0%2C10000000000&status=&category=67b87b044c53e8e91ac45129&searchText=";
         } else if (product.title.toLowerCase().includes("giày")) {
           apiUrl = "http://10.0.2.2:3055/v1/api/product?category=67b93c8c722783a60c162f3e";
         } else if (product.title.toLowerCase().includes("túi")) {
           apiUrl = "http://10.0.2.2:3055/v1/api/product?category=67b93e2d722783a60c163466";
         } else if (product.category && product.category._id) {
-          // Nếu có thông tin category, dùng category ID
           apiUrl = `http://10.0.2.2:3055/v1/api/product?category=${product.category._id}`;
         }
 
@@ -114,7 +112,7 @@ const ProductDetailScreen = ({ route }) => {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={{ marginRight: 15 }}
           onPress={() => navigation.navigate("Cart")}
         >
@@ -128,7 +126,7 @@ const ProductDetailScreen = ({ route }) => {
     <ScrollView style={styles.container}>
       {/* Phần hình ảnh sản phẩm */}
       <View style={styles.imageContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setShowZoomedImage(true)}
           activeOpacity={0.9}
         >
@@ -152,7 +150,7 @@ const ProductDetailScreen = ({ route }) => {
       {/* Modal hiển thị ảnh phóng to */}
       {showZoomedImage && (
         <View style={styles.modalContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setShowZoomedImage(false)}
           >
@@ -183,7 +181,7 @@ const ProductDetailScreen = ({ route }) => {
                   <Text style={styles.outOfStockText}>Hết hàng</Text>
                 )}
                 {sizeItem.quantity > 0 ? (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => handleAddToCart(sizeItem.size)}
                   >
@@ -201,40 +199,23 @@ const ProductDetailScreen = ({ route }) => {
           )}
         </View>
 
-        {/* Mã sản phẩm */}
+
         <Text style={styles.productCode}>Mã số: #{product._id?.substring(0, 7) || "0024228"}</Text>
         <Text style={styles.productFullTitle}>{product.title}</Text>
 
-        {/* Mô tả sản phẩm */}
+
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionTitle}>1. Kiểu sản phẩm: {product.title.split(" ")[0]}</Text>
-          <Text style={styles.descriptionTitle}>2. Ưu điểm:</Text>
+          <Text style={styles.descriptionTitle}>2. Chi tiết sản phẩm:</Text>
           {product.description ? (
             <Text style={styles.descriptionPoint}>{product.description}</Text>
           ) : (
-            <>
-              <Text style={styles.descriptionPoint}>• Chất liệu Polyester Pique Coffee giúp thoát ẩm nhanh, mang lại cảm giác mát mẻ, thoải mái khi mặc.</Text>
-              <Text style={styles.descriptionPoint}>• Với cổ áo nâng chống tia UV, bảo vệ làn da khỏi tác hại của ánh nắng mặt trời.</Text>
-              <Text style={styles.descriptionPoint}>• Chất liệu khô nhanh, giúp bạn luôn cảm thấy dễ chịu, đặc biệt trong những ngày thời tiết ẩm ướt.</Text>
-            </>
-          )}
-
-          {!showFullDescription && (
-            <TouchableOpacity 
-              style={styles.readMoreButton}
-              onPress={() => setShowFullDescription(true)}
-            >
-              <Text style={styles.readMoreText}>Đọc tiếp</Text>
-            </TouchableOpacity>
-          )}
-
-          {showFullDescription && (
-            <Text style={styles.descriptionPoint}>• Giúp loại bỏ mùi hôi, mang lại cảm giác tự tin suốt ngày dài.</Text>
+            <Text style={styles.descriptionPoint}>Chưa có thông tin mô tả cho sản phẩm này.</Text>
           )}
         </View>
       </View>
 
-     
+
 
       {/* Có thể bạn quan tâm */}
       {relatedProducts.length > 0 && (
@@ -242,14 +223,14 @@ const ProductDetailScreen = ({ route }) => {
           <Text style={styles.relatedTitle}>CÓ THỂ BẠN QUAN TÂM</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {relatedProducts.map((item, index) => (
-              <TouchableOpacity 
-                key={index} 
+              <TouchableOpacity
+                key={index}
                 style={styles.relatedItem}
                 onPress={() => navigation.navigate("ProductDetail", { product: item })}
               >
-                <Image 
-                  source={{ uri: getImageUrl(item.img) }} 
-                  style={styles.relatedImage} 
+                <Image
+                  source={{ uri: getImageUrl(item.img) }}
+                  style={styles.relatedImage}
                 />
                 <Text style={styles.relatedName}>{item.title}</Text>
                 <Text style={styles.relatedPrice}>{item.price?.toLocaleString()} đ</Text>

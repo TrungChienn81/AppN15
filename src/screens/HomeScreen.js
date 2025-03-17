@@ -50,7 +50,7 @@ const HomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, theme === "dark" && styles.darkContainer, styles.centerContent]}>
+      <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color="#6A5ACD" />
       </View>
     );
@@ -59,7 +59,7 @@ const HomeScreen = ({ navigation }) => {
   return (
     <ScrollView style={[styles.container, theme === "dark" && styles.darkContainer]}>
       <Text style={[styles.title, theme === "dark" && styles.darkText]}>
-        {language === "vi" ? "Chào mừng đến cửa hàng" : "Welcome to the store"}
+        {language === "vi" ? "Chào mừng đến với cửa hàng của Nhóm 15" : "Welcome to the store"}
       </Text>
 
       {/* Thanh tìm kiếm */}
@@ -67,12 +67,12 @@ const HomeScreen = ({ navigation }) => {
         <TextInput
           style={[styles.searchInput, theme === "dark" && styles.darkInput]}
           placeholder={language === "vi" ? "Tìm kiếm..." : "Search..."}
-          placeholderTextColor={theme === "dark" ? "#aaa" : "#999"}
+          placeholderTextColor={theme === "dark" ? "#999" : "#777"}
           value={query}
           onChangeText={setQuery}
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Icon name="search" size={22} color="#fff" />
+          <Icon name="search" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -83,12 +83,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("Pants")}
         >
           <View style={styles.categoryIcon}>
-            <Image 
-              source={require('../assets/icons/pants_icon.png')} 
+          <Image
+              source={require('../assets/icons/pants_icon.png')}
               style={styles.iconImage}
             />
           </View>
-          <Text style={styles.categoryText}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Quần" : "Pants"}
           </Text>
         </TouchableOpacity>
@@ -98,12 +98,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("Shirts")}
         >
           <View style={styles.categoryIcon}>
-            <Image 
-              source={require('../assets/icons/shirts_icon.png')} 
+          <Image
+              source={require('../assets/icons/shirts_icon.png')}
               style={styles.iconImage}
             />
           </View>
-          <Text style={styles.categoryText}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Áo" : "Shirts"}
           </Text>
         </TouchableOpacity>
@@ -113,12 +113,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("ShoesScreen")}
         >
           <View style={styles.categoryIcon}>
-            <Image 
-              source={require('../assets/icons/shoes_icon.png')} 
+          <Image
+              source={require('../assets/icons/shoes_icon.png')}
               style={styles.iconImage}
             />
           </View>
-          <Text style={styles.categoryText}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Giày" : "Shoes"}
           </Text>
         </TouchableOpacity>
@@ -128,13 +128,31 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("BagsScreen")}
         >
           <View style={styles.categoryIcon}>
-            <Image 
-              source={require('../assets/icons/bag_icon.png')} 
+          <Image
+              source={require('../assets/icons/bag_icon.png')}
               style={styles.iconImage}
             />
           </View>
-          <Text style={styles.categoryText}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Túi" : "Bags"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Nút váy */}
+      <View style={styles.dressButtonContainer}>
+        <TouchableOpacity 
+          style={styles.categoryButton}
+          onPress={() => navigation.navigate("DressScreen")}
+        >
+          <View style={styles.categoryIcon}>
+            <Image
+              source={require('../assets/icons/dress_icon.png')}
+              style={styles.iconImage}
+            />
+          </View>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
+            {language === "vi" ? "Váy" : "Dress"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -143,7 +161,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.productSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Icon name="star" size={20} color="#FF9800" />
+            <Icon name="star" size={24} color="#FFD700" />
             <Text style={[styles.sectionTitle, theme === "dark" && styles.darkText]}>
               {language === "vi" ? " Sản phẩm nổi bật" : " Top Rated Products"}
             </Text>
@@ -158,7 +176,7 @@ const HomeScreen = ({ navigation }) => {
             <Icon name="arrow-forward" size={16} color="#6A5ACD" />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.productList}>
           {topRatedProducts.slice(0, 3).map((item, index) => (
             <TouchableOpacity
@@ -166,8 +184,12 @@ const HomeScreen = ({ navigation }) => {
               style={styles.productItem}
               onPress={() => navigation.navigate("ProductDetail", { product: item })}
             >
-              <Text style={styles.productName} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.productPrice}>{item.price?.toLocaleString()} đ</Text>
+              <Text style={[styles.productName, theme === "dark" && styles.darkText]}>
+                {item.title}
+              </Text>
+              <Text style={styles.productPrice}>
+                {item.price?.toLocaleString()} đ
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -268,6 +290,10 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333",
     textAlign: "center",
+  },
+  dressButtonContainer: {
+    alignItems: "center",
+    marginBottom: 20,
   },
   productSection: {
     marginBottom: 24,
