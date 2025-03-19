@@ -307,7 +307,7 @@ const OrderConfirmationScreen = ({ navigation, route }) => {
 
                     <TouchableOpacity
                         style={styles.continueShopping}
-                        onPress={() => navigation.navigate("Home")}
+                        onPress={() => navigation.navigate("HomeStack", { screen: "HomeScreen" })}
                     >
                         <Text style={styles.continueShoppingText}>
                             {language === "vi" ? "Tiếp tục mua sắm" : "Continue Shopping"}

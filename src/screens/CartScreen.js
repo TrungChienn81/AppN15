@@ -193,7 +193,7 @@ const CartScreen = ({ navigation }) => {
                     <Animatable.View animation="fadeInUp" delay={600}>
                         <TouchableOpacity
                             style={styles.continueShoppingButton}
-                            onPress={() => navigation.navigate("Home")}
+                            onPress={() => navigation.navigate("HomeStack", { screen: "HomeScreen" })}
                             activeOpacity={0.7}
                         >
                             <Text style={styles.continueShoppingText}>
