@@ -33,7 +33,7 @@ const MainTabs = () => {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen
-        name={language === "vi" ? "Trang chủ" : "Home"}
+        name="Home"
         component={HomeScreen}
         options={{
           tabBarLabel: language === "vi" ? "Trang chủ" : "Home",
@@ -43,27 +43,17 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name={language === "vi" ? "Quần" : "Pants"}
-        component={PantsScreen}
+        name="Search"
+        component={SearchScreen}
         options={{
-          tabBarLabel: language === "vi" ? "Quần" : "Pants",
+          tabBarLabel: language === "vi" ? "Tìm kiếm" : "Search",
           tabBarIcon: ({ color, size }) => (
-            <Icon name="shopping-bag" color={color} size={size} />
+            <Icon name="search" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name={language === "vi" ? "Áo" : "Shirts"}
-        component={ShirtsScreen}
-        options={{
-          tabBarLabel: language === "vi" ? "Áo" : "Shirts",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="tshirt" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name={language === "vi" ? "Giỏ hàng" : "Cart"}
+        name="Cart"
         component={CartScreen}
         options={{
           tabBarLabel: language === "vi" ? "Giỏ hàng" : "Cart",
@@ -73,7 +63,7 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name={language === "vi" ? "Người dùng" : "User"}
+        name="User"
         component={UserScreen}
         options={{
           tabBarLabel: language === "vi" ? "Người dùng" : "User",
@@ -88,70 +78,113 @@ const MainTabs = () => {
 
 const AppNavigator = () => {
   const { isLoggedIn } = useAuth();
+  const { language } = useSettings();
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator>
         {isLoggedIn ? (
           <>
-            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen 
+              name="MainTabs" 
+              component={MainTabs} 
+              options={{ headerShown: false }}
+            />
             <Stack.Screen 
               name="ProductDetail" 
               component={ProductDetailScreen} 
-              options={{ headerShown: true }}
-            />
-            <Stack.Screen 
-              name="Search" 
-              component={SearchScreen} 
-              options={{ headerShown: true }}
-            />
-            <Stack.Screen 
-              name="Pants" 
-              component={PantsScreen} 
-              options={{ headerShown: true }}
-            />
-            <Stack.Screen 
-              name="Shirts" 
-              component={ShirtsScreen} 
-              options={{ headerShown: true }}
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Chi tiết sản phẩm" : "Product Detail",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
             />
             <Stack.Screen 
               name="TopRated" 
               component={TopRatedScreen} 
-              options={{ headerShown: true }}
-            />
-            <Stack.Screen 
-              name="Cart" 
-              component={CartScreen} 
-              options={{ headerShown: true }}
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Sản phẩm nổi bật" : "Top Rated",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
             />
             <Stack.Screen 
               name="Logout" 
               component={LogoutScreen} 
-              options={{ headerShown: true }}
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Đăng xuất" : "Logout",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
             />
             
-            {/* Thêm các màn hình */}
+            {/* Giữ nguyên các màn hình Pants và Shirts */}
             <Stack.Screen 
-              name="DressScreen" 
-              component={DressScreen} 
-              options={{ headerShown: true }}
+              name="Pants" 
+              component={PantsScreen} 
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Quần" : "Pants",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
             />
+            <Stack.Screen 
+              name="Shirts" 
+              component={ShirtsScreen} 
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Áo" : "Shirts",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
+            />
+            
+            {/* Sửa tên màn hình để khớp với HomeScreen.js */}
             <Stack.Screen 
               name="ShoesScreen" 
               component={ShoesScreen} 
-              options={{ headerShown: true }}
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Giày" : "Shoes",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
             />
             <Stack.Screen 
               name="BagsScreen" 
               component={BagsScreen} 
-              options={{ headerShown: true }}
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Túi" : "Bags",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
+            />
+            <Stack.Screen 
+              name="DressScreen" 
+              component={DressScreen} 
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Váy" : "Dress",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
             />
           </>
         ) : (
           <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen 
+              name="Login" 
+              component={LoginScreen} 
+              options={{ 
+                headerShown: false 
+              }}
+            />
+            <Stack.Screen 
+              name="Register" 
+              component={RegisterScreen} 
+              options={{ 
+                headerShown: true,
+                title: language === "vi" ? "Đăng ký" : "Register",
+                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+              }}
+            />
           </>
         )}
       </Stack.Navigator>
