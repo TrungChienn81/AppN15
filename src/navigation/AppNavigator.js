@@ -18,8 +18,10 @@ import RegisterScreen from "../screens/RegisterScreen";
 import LogoutScreen from "../screens/LogoutScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import TopRatedScreen from "../screens/TopRatedScreen";
+import PaymentScreen from "../screens/PaymentScreen";
+import OrderConfirmationScreen from "../screens/OrderConfirmationScreen";
 
-// Bỏ comment các import
+// Other screens
 import DressScreen from "../screens/DressScreen";
 import ShoesScreen from "../screens/ShoesScreen";
 import BagsScreen from "../screens/BagsScreen";
@@ -27,14 +29,132 @@ import BagsScreen from "../screens/BagsScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Create each tab's stack navigator for better navigation control
+const HomeStack = () => {
+  const { language } = useSettings();
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Chi tiết sản phẩm" : "Product Detail",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+      <Stack.Screen
+        name="TopRated"
+        component={TopRatedScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Sản phẩm nổi bật" : "Top Rated",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+      <Stack.Screen
+        name="Pants"
+        component={PantsScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Quần" : "Pants",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+      <Stack.Screen
+        name="Shirts"
+        component={ShirtsScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Áo" : "Shirts",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+      <Stack.Screen
+        name="ShoesScreen"
+        component={ShoesScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Giày" : "Shoes",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+      <Stack.Screen
+        name="BagsScreen"
+        component={BagsScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Túi" : "Bags",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+      <Stack.Screen
+        name="DressScreen"
+        component={DressScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Váy" : "Dress",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+const CartStack = () => {
+  const { language } = useSettings();
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CartMain" component={CartScreen} />
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+      <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
+    </Stack.Navigator>
+  );
+};
+
+const SearchStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SearchMain" component={SearchScreen} />
+    </Stack.Navigator>
+  );
+};
+
+const UserStack = () => {
+  const { language } = useSettings();
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="UserScreen"
+        component={UserScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Logout"
+        component={LogoutScreen}
+        options={{
+          headerShown: true,
+          title: language === "vi" ? "Đăng xuất" : "Logout",
+          headerBackTitle: language === "vi" ? "Quay lại" : "Back"
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
 const MainTabs = () => {
   const { language } = useSettings();
 
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
+        name="HomeStack"
+        component={HomeStack}
         options={{
           tabBarLabel: language === "vi" ? "Trang chủ" : "Home",
           tabBarIcon: ({ color, size }) => (
@@ -43,8 +163,8 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Search"
-        component={SearchScreen}
+        name="SearchStack"
+        component={SearchStack}
         options={{
           tabBarLabel: language === "vi" ? "Tìm kiếm" : "Search",
           tabBarIcon: ({ color, size }) => (
@@ -53,8 +173,8 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Cart"
-        component={CartScreen}
+        name="CartStack"
+        component={CartStack}
         options={{
           tabBarLabel: language === "vi" ? "Giỏ hàng" : "Cart",
           tabBarIcon: ({ color, size }) => (
@@ -63,8 +183,8 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name="User"
-        component={UserScreen}
+        name="UserStack"
+        component={UserStack}
         options={{
           tabBarLabel: language === "vi" ? "Người dùng" : "User",
           tabBarIcon: ({ color, size }) => (
@@ -84,102 +204,24 @@ const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator>
         {isLoggedIn ? (
-          <>
-            <Stack.Screen 
-              name="MainTabs" 
-              component={MainTabs} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="ProductDetail" 
-              component={ProductDetailScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Chi tiết sản phẩm" : "Product Detail",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            <Stack.Screen 
-              name="TopRated" 
-              component={TopRatedScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Sản phẩm nổi bật" : "Top Rated",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            <Stack.Screen 
-              name="Logout" 
-              component={LogoutScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Đăng xuất" : "Logout",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            
-            {/* Giữ nguyên các màn hình Pants và Shirts */}
-            <Stack.Screen 
-              name="Pants" 
-              component={PantsScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Quần" : "Pants",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            <Stack.Screen 
-              name="Shirts" 
-              component={ShirtsScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Áo" : "Shirts",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            
-            {/* Sửa tên màn hình để khớp với HomeScreen.js */}
-            <Stack.Screen 
-              name="ShoesScreen" 
-              component={ShoesScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Giày" : "Shoes",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            <Stack.Screen 
-              name="BagsScreen" 
-              component={BagsScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Túi" : "Bags",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-            <Stack.Screen 
-              name="DressScreen" 
-              component={DressScreen} 
-              options={{ 
-                headerShown: true,
-                title: language === "vi" ? "Váy" : "Dress",
-                headerBackTitle: language === "vi" ? "Quay lại" : "Back"
-              }}
-            />
-          </>
+          <Stack.Screen
+            name="Main"
+            component={MainTabs}
+            options={{ headerShown: false }}
+          />
         ) : (
           <>
-            <Stack.Screen 
-              name="Login" 
-              component={LoginScreen} 
-              options={{ 
-                headerShown: false 
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{
+                headerShown: false
               }}
             />
-            <Stack.Screen 
-              name="Register" 
-              component={RegisterScreen} 
-              options={{ 
+            <Stack.Screen
+              name="Register"
+              component={RegisterScreen}
+              options={{
                 headerShown: true,
                 title: language === "vi" ? "Đăng ký" : "Register",
                 headerBackTitle: language === "vi" ? "Quay lại" : "Back"

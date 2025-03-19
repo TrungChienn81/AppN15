@@ -35,22 +35,15 @@ const CartScreen = ({ navigation }) => {
         }
 
         setCheckingOut(true);
-        // Simulate API call with timeout
+
+        // Using simple navigation since PaymentScreen is now in the same stack
         setTimeout(() => {
-            Alert.alert(
-                language === "vi" ? "Thanh Toán" : "Checkout",
-                language === "vi" ? "Đang xử lý thanh toán..." : "Proceeding to checkout...",
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            setCheckingOut(false);
-                            navigation.navigate("PaymentScreen");
-                        }
-                    }
-                ]
-            );
-        }, 1500);
+            setCheckingOut(false);
+            navigation.navigate('PaymentScreen', {
+                totalAmount: calculateTotal(),
+                cartItems: cartItems
+            });
+        }, 500);
     };
 
     // Image error handling
@@ -145,6 +138,31 @@ const CartScreen = ({ navigation }) => {
                 }
             ]
         );
+    };
+
+    // Modify this function to handle quantity changes
+    const handleQuantityChange = (id, newQuantity) => {
+        // If attempting to decrement when quantity is 1, confirm removal
+        if (newQuantity < 1) {
+            Alert.alert(
+                language === "vi" ? "Xóa Sản Phẩm" : "Remove Item",
+                language === "vi" ? "Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?" : "Are you sure you want to remove this item from your cart?",
+                [
+                    {
+                        text: language === "vi" ? "Hủy" : "Cancel",
+                        style: "cancel"
+                    },
+                    {
+                        text: language === "vi" ? "Xóa" : "Remove",
+                        onPress: () => removeFromCart(id),
+                        style: "destructive"
+                    }
+                ]
+            );
+        } else {
+            // If incrementing or decrementing to quantity > 1, just update
+            updateQuantity(id, newQuantity);
+        }
     };
 
     if (cartItems.length === 0) {
@@ -271,16 +289,14 @@ const CartScreen = ({ navigation }) => {
                                     <TouchableOpacity
                                         style={[
                                             styles.quantityButton,
-                                            theme === "dark" && styles.darkQuantityButton,
-                                            item.quantity <= 1 && styles.disabledButton
+                                            theme === "dark" && styles.darkQuantityButton
                                         ]}
-                                        onPress={() => item.quantity > 1 && updateQuantity(item._id, item.quantity - 1)}
-                                        disabled={item.quantity <= 1}
+                                        onPress={() => handleQuantityChange(item._id, item.quantity - 1)}
                                     >
                                         <Icon
                                             name="minus"
                                             size={14}
-                                            color={item.quantity <= 1 ? "#999" : (theme === "dark" ? "#FFF" : "#333")}
+                                            color={theme === "dark" ? "#FFF" : "#333"}
                                         />
                                     </TouchableOpacity>
                                     <Text style={[
@@ -294,7 +310,7 @@ const CartScreen = ({ navigation }) => {
                                             styles.quantityButton,
                                             theme === "dark" && styles.darkQuantityButton
                                         ]}
-                                        onPress={() => updateQuantity(item._id, item.quantity + 1)}
+                                        onPress={() => handleQuantityChange(item._id, item.quantity + 1)}
                                     >
                                         <Icon name="plus" size={14} color={theme === "dark" ? "#FFF" : "#333"} />
                                     </TouchableOpacity>
@@ -321,7 +337,7 @@ const CartScreen = ({ navigation }) => {
                         styles.summaryTitle,
                         theme === "dark" && styles.darkText
                     ]}>
-                        {language === "vi" ? "Tóm Tắt Đơn Hàng" : "Order Summary"}
+                        {language === "vi" ? "Thông Tin Đơn Hàng" : "Order Information"}
                     </Text>
 
                     <View style={styles.promoContainer}>

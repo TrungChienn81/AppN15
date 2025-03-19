@@ -26,10 +26,10 @@ const LoginScreen = ({ navigation }) => {
 
     useEffect(() => {
         if (isLoggedIn) {
-            console.log("✅ User logged in, navigating to MainTabs...");
+            console.log("✅ User logged in, navigating to Main...");
             navigation.reset({
                 index: 0,
-                routes: [{ name: "MainTabs" }]
+                routes: [{ name: "Main" }]
             });
         }
     }, [isLoggedIn, navigation]);
