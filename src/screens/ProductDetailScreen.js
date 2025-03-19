@@ -46,7 +46,8 @@ const ProductDetailScreen = ({ route }) => {
         },
         {
           text: "Đến giỏ hàng",
-          onPress: () => navigation.navigate("Cart")
+          onPress: () => navigation.navigate("MainTabs", { screen: "Cart" })
+
         }
       ]
     );
@@ -112,10 +113,7 @@ const ProductDetailScreen = ({ route }) => {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          style={{ marginRight: 15 }}
-          onPress={() => navigation.navigate("Cart")}
-        >
+        <TouchableOpacity style={{ marginRight: 15 }} onPress={() => navigation.navigate("MainTabs", { screen: "Cart" })}>
           <Icon name="shopping-cart" size={24} color="#FF4081" />
         </TouchableOpacity>
       ),
