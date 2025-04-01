@@ -287,131 +287,104 @@ const PaymentScreen = ({ navigation, route }) => {
     return `${VNP_URL}?${queryString}&vnp_SecureHash=${secureHash}`;
   };
 
+  // Hàm tự động refresh token
+  const refreshToken = async () => {
+    try {
+      const refreshTokenValue = await AsyncStorage.getItem('refreshToken');
+      if (!refreshTokenValue) return false;
+      
+      console.log("Attempting to refresh token...");
+      const response = await fetch("http://10.0.2.2:3055/v1/api/refresh-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          refreshToken: refreshTokenValue,
+          userId: userId
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.accessToken) {
+          await AsyncStorage.setItem('accessToken', data.accessToken);
+          setAccessToken(data.accessToken);
+          console.log("Token refreshed successfully");
+          return true;
+        }
+      }
+      
+      console.log("Failed to refresh token");
+      return false;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      return false;
+    }
+  };
+
   // Tạo đơn hàng trong hệ thống sau khi thanh toán
   const createOrderAfterPayment = async (vnpResponseData) => {
     try {
-      // Lấy lại token và userId từ AsyncStorage trực tiếp thay vì dựa vào state
+      // Lấy lại token và userId từ AsyncStorage
       let tokenToUse = accessToken;
       let userIdToUse = userId;
       
       if (!tokenToUse || !userIdToUse) {
-        console.log("Token or userId not in state, trying to get from AsyncStorage...");
-        try {
-          // Lấy token từ AsyncStorage
-          tokenToUse = await AsyncStorage.getItem('accessToken');
-          
-          if (tokenToUse) {
-            console.log("Retrieved token from AsyncStorage");
-            
-            // Nếu không có userId, thử phân tích token để lấy
-            if (!userIdToUse) {
-              const tokenData = parseJwt(tokenToUse);
-              if (tokenData && (tokenData.userId || tokenData._id)) {
-                userIdToUse = tokenData.userId || tokenData._id;
-                console.log("Extracted userId from token:", userIdToUse);
-                // Lưu userId vào AsyncStorage
-                await AsyncStorage.setItem('userId', userIdToUse);
-              }
-            }
+        // Lấy từ AsyncStorage nếu không có trong state
+        tokenToUse = await AsyncStorage.getItem('accessToken');
+        userIdToUse = await AsyncStorage.getItem('userId');
+        
+        // Nếu vẫn không có userId, thử trích xuất từ token
+        if (tokenToUse && !userIdToUse) {
+          const tokenData = parseJwt(tokenToUse);
+          if (tokenData && (tokenData.userId || tokenData._id)) {
+            userIdToUse = tokenData.userId || tokenData._id;
+            console.log("Extracted userId from token:", userIdToUse);
+            await AsyncStorage.setItem('userId', userIdToUse);
           }
-          
-          // Nếu vẫn không có userId, thử lấy từ AsyncStorage
-          if (!userIdToUse) {
-            userIdToUse = await AsyncStorage.getItem('userId');
-            if (userIdToUse) {
-              console.log("Retrieved userId from AsyncStorage:", userIdToUse);
-            }
-          }
-        } catch (storageError) {
-          console.error("Error accessing AsyncStorage:", storageError);
         }
       }
-
-      // Vẫn kiểm tra nếu không có token hoặc userId sau khi thử lấy từ AsyncStorage
+      
       if (!tokenToUse || !userIdToUse) {
         console.error("No token or userId available");
         
-        // Lưu thông tin đơn hàng vào bộ nhớ local để không bị mất
-        try {
-          const orderData = {
-            recipientInfo: formData,
-            paymentData: vnpResponseData,
-            items: orderItems,
-            amount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
-            timestamp: new Date().toISOString()
-          };
-          
-          await AsyncStorage.setItem('pendingVnpayOrder', JSON.stringify(orderData));
-          console.log("Saved VNPAY order data to local storage for later processing");
-          
-          // Thông báo cho người dùng
-          Alert.alert(
-            language === "vi" ? "Thanh toán thành công" : "Payment Successful",
-            language === "vi" 
-              ? "Thanh toán của bạn đã thành công, nhưng cần đăng nhập để hoàn tất đơn hàng." 
-              : "Your payment was successful, but login is required to complete your order.",
-            [
-              {
-                text: language === "vi" ? "Hiển thị chi tiết" : "Show details",
-                onPress: () => {
-                  navigation.navigate("OrderConfirmation", {
-                    orderDetails: {
-                      ...formData,
-                      totalAmount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
-                      items: orderItems,
-                      orderNumber: vnpResponseData.vnp_TxnRef,
-                      orderDate: new Date().toISOString(),
-                      paymentStatus: language === "vi" ? "Đã thanh toán" : "Paid",
-                      paymentMethod: "vnpay",
-                      pendingServerSync: true
-                    }
-                  });
-                }
-              }
-            ]
-          );
-          
-          return null;
-        } catch (storageError) {
-          console.error("Failed to save payment data:", storageError);
-          return null;
-        }
-      }
-
-      console.log("VNPAY Response Data:", JSON.stringify(vnpResponseData));
-      
-      // Chuẩn bị dữ liệu giỏ hàng đúng cấu trúc
-      const validCartItems = orderItems.map(item => {
-        const productId = item.id || item.productId || item._id || item.product;
+        // Lưu thông tin đơn hàng để xử lý sau
+        await AsyncStorage.setItem('pendingVnpayOrder', JSON.stringify({
+          recipientInfo: formData,
+          paymentData: vnpResponseData,
+          items: orderItems,
+          amount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount
+        }));
         
-        if (!productId) {
-          console.warn("Item missing product ID:", item);
-        }
-        
-        return {
-          product: productId,
-          quantity: item.quantity,
-          size: item.size || "M"
-        };
-      }).filter(item => item.product);
-      
-      if (validCartItems.length === 0) {
-        console.error("No valid items in cart");
         Alert.alert(
-          language === "vi" ? "Lỗi giỏ hàng" : "Cart Error",
+          language === "vi" ? "Đăng nhập hết hạn" : "Login expired",
           language === "vi" 
-            ? "Không tìm thấy thông tin sản phẩm trong giỏ hàng" 
-            : "No product information found in cart"
+            ? "Vui lòng đăng nhập lại để hoàn tất đơn hàng" 
+            : "Please login again to complete your order",
+          [
+            {
+              text: language === "vi" ? "Đăng nhập" : "Login",
+              onPress: () => navigation.navigate("Login", { returnToPaymentScreen: true })
+            }
+          ]
         );
         return null;
       }
       
-      // Tạo payload đúng cấu trúc cho API
+      // Chuẩn bị dữ liệu giỏ hàng đúng cấu trúc
+      const validCartItems = orderItems.map(item => ({
+        product: item.id || item.productId || item._id || item.product,
+        quantity: item.quantity,
+        size: item.size || "M"
+      })).filter(item => item.product);
+      
+      // Tạo payload API
       const orderPayload = {
         recipientName: formData.fullName,
         phone: formData.phone,
         address: formData.address,
-        paymentMethod: "vnpay",  // Cài đặt là "vnpay" để đảm bảo trạng thái đơn hàng đúng
+        paymentMethod: "vnpay",
         totalAmount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
         cart: validCartItems
       };
@@ -425,7 +398,7 @@ const PaymentScreen = ({ navigation, route }) => {
         ? tokenToUse 
         : `Bearer ${tokenToUse}`;
       
-      // Gửi request tạo đơn hàng
+      // QUAN TRỌNG: Sửa endpoint API và thêm header x-client-id
       const response = await fetch("http://10.0.2.2:3055/v1/api/order", {
         method: "POST",
         headers: {
@@ -438,6 +411,66 @@ const PaymentScreen = ({ navigation, route }) => {
       
       const responseText = await response.text();
       console.log(`Server response (${response.status}):`, responseText);
+      
+      // Xử lý lỗi 401 - thử refresh token
+      if (response.status === 401) {
+        console.log("Token expired, trying to refresh...");
+        const refreshed = await refreshToken();
+        
+        if (refreshed) {
+          // Nếu refresh thành công, thử lại request với token mới
+          const newToken = await AsyncStorage.getItem('accessToken');
+          
+          const retryResponse = await fetch("http://10.0.2.2:3055/v1/api/order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${newToken}`,
+              "x-client-id": userIdToUse
+            },
+            body: JSON.stringify(orderPayload)
+          });
+          
+          if (retryResponse.ok) {
+            const retryText = await retryResponse.text();
+            try {
+              return JSON.parse(retryText);
+            } catch (e) {
+              return { success: true };
+            }
+          } else {
+            // Nếu vẫn lỗi, thông báo đăng nhập lại
+            Alert.alert(
+              language === "vi" ? "Phiên làm việc hết hạn" : "Session expired",
+              language === "vi" 
+                ? "Vui lòng đăng nhập lại để hoàn tất đơn hàng" 
+                : "Please login again to complete your order",
+              [
+                {
+                  text: language === "vi" ? "Đăng nhập" : "Login",
+                  onPress: () => navigation.navigate("Login")
+                }
+              ]
+            );
+            return null;
+          }
+        } else {
+          // Nếu không refresh được token, thông báo đăng nhập lại
+          Alert.alert(
+            language === "vi" ? "Phiên làm việc hết hạn" : "Session expired",
+            language === "vi" 
+              ? "Vui lòng đăng nhập lại để hoàn tất đơn hàng" 
+              : "Please login again to complete your order",
+            [
+              {
+                text: language === "vi" ? "Đăng nhập" : "Login",
+                onPress: () => navigation.navigate("Login")
+              }
+            ]
+          );
+          return null;
+        }
+      }
       
       if (!response.ok) {
         throw new Error(`Failed to create order: ${response.status} - ${responseText}`);
@@ -529,9 +562,24 @@ const PaymentScreen = ({ navigation, route }) => {
           );
         }
       })
-      .catch(error => {
-        setLoading(false);
+      .catch(async error => {
         console.error("Error:", error);
+        
+        // Thử refresh token nếu lỗi xác thực
+        if (error.message.includes("401")) {
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            setLoading(false);
+            // Thông báo thử lại
+            Alert.alert(
+              language === "vi" ? "Thông báo" : "Notification",
+              language === "vi" ? "Đã cập nhật phiên làm việc, vui lòng thử lại" : "Session updated, please try again"
+            );
+            return;
+          }
+        }
+        
+        setLoading(false);
         // Hiện hộp thoại hỏi người dùng có muốn thử phương thức thanh toán trực tiếp không
         Alert.alert(
           language === "vi" ? "Lỗi kết nối" : "Connection Error",
