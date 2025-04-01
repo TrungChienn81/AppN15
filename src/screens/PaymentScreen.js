@@ -19,18 +19,16 @@ import { WebView } from 'react-native-webview';
 import CryptoJS from 'crypto-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Hàm phân tích query params từ URL (thay thế URLSearchParams)
+// Hàm phân tích query params từ URL
 const parseQueryParams = (url) => {
   try {
     const queryString = url.split('?')[1];
     if (!queryString) return {};
-    
     const params = {};
     queryString.split('&').forEach(param => {
       const [key, value] = param.split('=');
       params[key] = decodeURIComponent(value || '');
     });
-    
     return params;
   } catch (error) {
     console.error('Error parsing URL parameters:', error);
@@ -38,34 +36,68 @@ const parseQueryParams = (url) => {
   }
 };
 
+// Hàm giải mã base64 (cho JWT token)
+const base64Decode = (str) => {
+  try {
+    return decodeURIComponent(
+      Array.prototype.map
+        .call(
+          atob(str.replace(/-/g, '+').replace(/_/g, '/')),
+          c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        )
+        .join('')
+    );
+  } catch (e) {
+    console.error("Error decoding base64:", e);
+    return "";
+  }
+};
+
+// Hàm phân tích JWT token để lấy userId
+const parseJwt = (token) => {
+  try {
+    if (!token) return null;
+    // Loại bỏ prefix "Bearer " nếu có
+    const jwt = token.startsWith('Bearer ') ? token.substring(7) : token;
+    const parts = jwt.split('.');
+    if (parts.length !== 3) return null;
+    
+    const payload = JSON.parse(base64Decode(parts[1]));
+    return payload;
+  } catch (e) {
+    console.error("Error parsing JWT:", e);
+    return null;
+  }
+};
+
 // Component WebView để hiển thị trang thanh toán
 const PaymentWebView = ({ paymentUrl, onNavigationStateChange, onClose, language }) => {
+  const [isLoading, setIsLoading] = useState(true);
   return (
-    <SafeAreaView style={styles.webViewContainer}>
+    <View style={styles.webViewContainer}>
       <View style={styles.webViewHeader}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Icon name="arrow-left" size={20} color="#000" />
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <Icon name="times" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.webViewHeaderTitle}>
           {language === "vi" ? "Thanh toán VNPAY" : "VNPAY Payment"}
         </Text>
         <View style={styles.placeholder} />
       </View>
-      
-      <WebView 
+      <WebView
         source={{ uri: paymentUrl }}
         style={styles.webView}
         onNavigationStateChange={onNavigationStateChange}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
         startInLoadingState={true}
-        renderLoading={() => (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6A5ACD" />
-          </View>
-        )}
+        onLoadStart={() => setIsLoading(true)}
+        onLoadEnd={() => setIsLoading(false)}
       />
-    </SafeAreaView>
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6A5ACD" />
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -77,25 +109,67 @@ const PaymentScreen = ({ navigation, route }) => {
   const [showWebView, setShowWebView] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [directPaymentMode, setDirectPaymentMode] = useState(false);
-  const [accessToken, setAccessToken] = useState(token);
+  const [accessToken, setAccessToken] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
 
-  // Lấy token từ AsyncStorage khi component mount
+  // Lấy token và userId từ AsyncStorage hoặc context khi component mount
   useEffect(() => {
-    const getToken = async () => {
+    const getAuthInfo = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('accessToken');
-        if (storedToken) {
-          setAccessToken(storedToken);
-          console.log("Loaded token from storage");
+        console.log("Loading authentication info...");
+        
+        // Lấy token từ context hoặc AsyncStorage
+        let tokenToUse = token;
+        if (!tokenToUse) {
+          const storedToken = await AsyncStorage.getItem('accessToken');
+          if (storedToken) {
+            tokenToUse = storedToken.trim().replace(/^["'](.*)["']$/, '$1');
+            console.log("Using token from storage");
+          }
+        } else {
+          console.log("Using token from context");
+          await AsyncStorage.setItem('accessToken', token);
         }
+        
+        setAccessToken(tokenToUse);
+        
+        // Lấy userId từ context hoặc AsyncStorage
+        let userIdToUse = user && (user._id || user.userId);
+        if (!userIdToUse) {
+          // Thử lấy từ AsyncStorage
+          const storedUserId = await AsyncStorage.getItem('userId');
+          if (storedUserId) {
+            userIdToUse = storedUserId;
+            console.log("Using userId from storage:", userIdToUse);
+          } else if (tokenToUse) {
+            // Phân tích token để lấy userId
+            const tokenData = parseJwt(tokenToUse);
+            if (tokenData && (tokenData.userId || tokenData._id)) {
+              userIdToUse = tokenData.userId || tokenData._id;
+              console.log("Extracted userId from token:", userIdToUse);
+              // Lưu userId vào AsyncStorage để sử dụng sau này
+              await AsyncStorage.setItem('userId', userIdToUse);
+            }
+          }
+        } else {
+          console.log("Using userId from context:", userIdToUse);
+          await AsyncStorage.setItem('userId', userIdToUse);
+        }
+        
+        setUserId(userIdToUse);
+        setAuthLoaded(true);
+        
       } catch (error) {
-        console.error("Error fetching token:", error);
+        console.error("Error fetching auth info:", error);
+        setAuthLoaded(true);
       }
     };
-    getToken();
-  }, []);
+    
+    getAuthInfo();
+  }, [token, user]);
 
-  // Form state - LOẠI BỎ TRƯỜNG CITY theo yêu cầu
+  // Form state
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -150,7 +224,7 @@ const PaymentScreen = ({ navigation, route }) => {
     return true;
   };
 
-  // Hàm sắp xếp tham số VNPAY - giữ nguyên từ file gốc
+  // Hàm sắp xếp tham số VNPAY
   const sortObject = (obj) => {
     let sorted = {};
     let str = [];
@@ -166,39 +240,37 @@ const PaymentScreen = ({ navigation, route }) => {
     return sorted;
   };
 
-  // Tạo URL thanh toán trực tiếp - với định dạng mã đơn MongoDB
+  // Tạo URL thanh toán trực tiếp
   const createDirectPaymentUrl = () => {
     const amount = Math.round(totalAmount * 100);
     const date = new Date();
     const createDate = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
-    
-    // Sử dụng định dạng tương tự với MongoDB ObjectId
+
+    // Tạo định dạng tương tự MongoDB ObjectId
     const timestamp = Math.floor(new Date().getTime() / 1000).toString(16).padStart(8, '0');
     const machineId = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
     const processId = Math.floor(Math.random() * 65536).toString(16).padStart(4, '0');
     const counter = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
     const orderId = timestamp + machineId + processId + counter;
-    
-    // Tạo đối tượng tham số VNPAY
-    let vnpParams = {};
-    vnpParams['vnp_Version'] = '2.1.0';
-    vnpParams['vnp_Command'] = 'pay';
-    vnpParams['vnp_TmnCode'] = VNP_TMNCODE;
-    vnpParams['vnp_Locale'] = 'vn';
-    vnpParams['vnp_CurrCode'] = 'VND';
-    vnpParams['vnp_TxnRef'] = orderId;
-    vnpParams['vnp_OrderInfo'] = `Thanh toan don hang ${orderId}`;
-    vnpParams['vnp_OrderType'] = 'other';
-    vnpParams['vnp_Amount'] = amount;
-    vnpParams['vnp_ReturnUrl'] = VNP_RETURN_URL;
-    vnpParams['vnp_IpAddr'] = '127.0.0.1';
-    vnpParams['vnp_CreateDate'] = createDate;
-    
-    // Sắp xếp tham số theo thứ tự
+
+    let vnpParams = {
+      vnp_Version: "2.1.0",
+      vnp_Command: "pay",
+      vnp_TmnCode: VNP_TMNCODE,
+      vnp_Locale: "vn",
+      vnp_CurrCode: "VND",
+      vnp_TxnRef: orderId,
+      vnp_OrderInfo: `Thanh toan don hang ${orderId}`,
+      vnp_OrderType: "other",
+      vnp_Amount: amount,
+      vnp_ReturnUrl: VNP_RETURN_URL,
+      vnp_IpAddr: "127.0.0.1",
+      vnp_CreateDate: createDate
+    };
+
     vnpParams = sortObject(vnpParams);
-    
-    // Tạo chuỗi querystring
-    let queryString = '';
+
+    let queryString = "";
     let i = 0;
     for (const key in vnpParams) {
       if (i === 0) {
@@ -208,64 +280,169 @@ const PaymentScreen = ({ navigation, route }) => {
       }
       i++;
     }
-    
-    // Tạo chữ ký
+
     let hmac = CryptoJS.HmacSHA512(queryString, VNP_HASHSECRET);
     let secureHash = hmac.toString(CryptoJS.enc.Hex);
-    
-    // Thêm chữ ký vào querystring
+
     return `${VNP_URL}?${queryString}&vnp_SecureHash=${secureHash}`;
   };
 
-  // Tạo đơn hàng trong hệ thống - ĐÃ SỬA THEO ĐÚNG ĐỊNH DẠNG API BACKEND
+  // Tạo đơn hàng trong hệ thống sau khi thanh toán
   const createOrderAfterPayment = async (vnpResponseData) => {
     try {
-      if (!accessToken) {
-        console.error("No token available");
+      // Lấy lại token và userId từ AsyncStorage trực tiếp thay vì dựa vào state
+      let tokenToUse = accessToken;
+      let userIdToUse = userId;
+      
+      if (!tokenToUse || !userIdToUse) {
+        console.log("Token or userId not in state, trying to get from AsyncStorage...");
+        try {
+          // Lấy token từ AsyncStorage
+          tokenToUse = await AsyncStorage.getItem('accessToken');
+          
+          if (tokenToUse) {
+            console.log("Retrieved token from AsyncStorage");
+            
+            // Nếu không có userId, thử phân tích token để lấy
+            if (!userIdToUse) {
+              const tokenData = parseJwt(tokenToUse);
+              if (tokenData && (tokenData.userId || tokenData._id)) {
+                userIdToUse = tokenData.userId || tokenData._id;
+                console.log("Extracted userId from token:", userIdToUse);
+                // Lưu userId vào AsyncStorage
+                await AsyncStorage.setItem('userId', userIdToUse);
+              }
+            }
+          }
+          
+          // Nếu vẫn không có userId, thử lấy từ AsyncStorage
+          if (!userIdToUse) {
+            userIdToUse = await AsyncStorage.getItem('userId');
+            if (userIdToUse) {
+              console.log("Retrieved userId from AsyncStorage:", userIdToUse);
+            }
+          }
+        } catch (storageError) {
+          console.error("Error accessing AsyncStorage:", storageError);
+        }
+      }
+
+      // Vẫn kiểm tra nếu không có token hoặc userId sau khi thử lấy từ AsyncStorage
+      if (!tokenToUse || !userIdToUse) {
+        console.error("No token or userId available");
+        
+        // Lưu thông tin đơn hàng vào bộ nhớ local để không bị mất
+        try {
+          const orderData = {
+            recipientInfo: formData,
+            paymentData: vnpResponseData,
+            items: orderItems,
+            amount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
+            timestamp: new Date().toISOString()
+          };
+          
+          await AsyncStorage.setItem('pendingVnpayOrder', JSON.stringify(orderData));
+          console.log("Saved VNPAY order data to local storage for later processing");
+          
+          // Thông báo cho người dùng
+          Alert.alert(
+            language === "vi" ? "Thanh toán thành công" : "Payment Successful",
+            language === "vi" 
+              ? "Thanh toán của bạn đã thành công, nhưng cần đăng nhập để hoàn tất đơn hàng." 
+              : "Your payment was successful, but login is required to complete your order.",
+            [
+              {
+                text: language === "vi" ? "Hiển thị chi tiết" : "Show details",
+                onPress: () => {
+                  navigation.navigate("OrderConfirmation", {
+                    orderDetails: {
+                      ...formData,
+                      totalAmount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
+                      items: orderItems,
+                      orderNumber: vnpResponseData.vnp_TxnRef,
+                      orderDate: new Date().toISOString(),
+                      paymentStatus: language === "vi" ? "Đã thanh toán" : "Paid",
+                      paymentMethod: "vnpay",
+                      pendingServerSync: true
+                    }
+                  });
+                }
+              }
+            ]
+          );
+          
+          return null;
+        } catch (storageError) {
+          console.error("Failed to save payment data:", storageError);
+          return null;
+        }
+      }
+
+      console.log("VNPAY Response Data:", JSON.stringify(vnpResponseData));
+      
+      // Chuẩn bị dữ liệu giỏ hàng đúng cấu trúc
+      const validCartItems = orderItems.map(item => {
+        const productId = item.id || item.productId || item._id || item.product;
+        
+        if (!productId) {
+          console.warn("Item missing product ID:", item);
+        }
+        
+        return {
+          product: productId,
+          quantity: item.quantity,
+          size: item.size || "M"
+        };
+      }).filter(item => item.product);
+      
+      if (validCartItems.length === 0) {
+        console.error("No valid items in cart");
         Alert.alert(
-          language === "vi" ? "Cần đăng nhập" : "Login Required",
-          language === "vi" ? "Vui lòng đăng nhập để hoàn tất đơn hàng" : "Please login to complete your order"
+          language === "vi" ? "Lỗi giỏ hàng" : "Cart Error",
+          language === "vi" 
+            ? "Không tìm thấy thông tin sản phẩm trong giỏ hàng" 
+            : "No product information found in cart"
         );
         return null;
       }
       
-      // Tạo payload theo đúng cấu trúc trong order.service.js
+      // Tạo payload đúng cấu trúc cho API
       const orderPayload = {
         recipientName: formData.fullName,
         phone: formData.phone,
         address: formData.address,
-        paymentMethod: "vnpay",
+        paymentMethod: "vnpay",  // Cài đặt là "vnpay" để đảm bảo trạng thái đơn hàng đúng
         totalAmount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
-        // Định dạng cart đúng theo order.service.js
-        cart: orderItems.map(item => ({
-          product: item.id,      // ID của sản phẩm
-          quantity: item.quantity,
-          price: item.price,
-          size: item.size || "M"  // Mặc định size nếu không có
-        }))
+        cart: validCartItems
       };
-
+      
       console.log("Creating order with payload:", JSON.stringify(orderPayload));
-      console.log("Using token:", accessToken);
-
-      // Gọi API tạo đơn hàng
+      console.log("Using token:", tokenToUse);
+      console.log("Using userId:", userIdToUse);
+      
+      // Đảm bảo token có định dạng Bearer
+      const authHeader = tokenToUse.startsWith('Bearer ') 
+        ? tokenToUse 
+        : `Bearer ${tokenToUse}`;
+      
+      // Gửi request tạo đơn hàng
       const response = await fetch("http://10.0.2.2:3055/v1/api/order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`
+          "Authorization": authHeader,
+          "x-client-id": userIdToUse
         },
         body: JSON.stringify(orderPayload)
       });
-
-      // Log chi tiết response để debug
+      
       const responseText = await response.text();
       console.log(`Server response (${response.status}):`, responseText);
-
+      
       if (!response.ok) {
         throw new Error(`Failed to create order: ${response.status} - ${responseText}`);
       }
-
+      
       let data;
       try {
         data = JSON.parse(responseText);
@@ -278,15 +455,18 @@ const PaymentScreen = ({ navigation, route }) => {
       return data;
     } catch (error) {
       console.error("Error creating order:", error);
+      Alert.alert(
+        language === "vi" ? "Lỗi" : "Error",
+        language === "vi" ? "Không thể tạo đơn hàng. Vui lòng thử lại sau." : "Cannot create order. Please try again later."
+      );
       return null;
     }
   };
 
   const handlePlaceOrder = () => {
     if (!validateForm()) return;
-    
     setLoading(true);
-    
+
     // Nếu đã chọn thanh toán trực tiếp
     if (directPaymentMode) {
       const directUrl = createDirectPaymentUrl();
@@ -295,8 +475,18 @@ const PaymentScreen = ({ navigation, route }) => {
       setLoading(false);
       return;
     }
-    
-    // Chuẩn bị dữ liệu để gửi lên server - ĐÃ SỬA LOẠI BỎ CITY
+
+    // Kiểm tra xác thực
+    if (!accessToken || !userId) {
+      setLoading(false);
+      Alert.alert(
+        language === "vi" ? "Cần đăng nhập" : "Login Required",
+        language === "vi" ? "Vui lòng đăng nhập để tiếp tục" : "Please login to continue"
+      );
+      return;
+    }
+
+    // Chuẩn bị dữ liệu để gửi lên server
     const payload = {
       recipientName: formData.fullName,
       phone: formData.phone,
@@ -308,78 +498,75 @@ const PaymentScreen = ({ navigation, route }) => {
         price: item.price
       }))
     };
-    
+
     // Gọi API payment
-    fetch("http://10.0.2.2:3055/payment", {
+    fetch("http://10.0.2.2:3055/v1/api/payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken || token || ""}`
+        "Authorization": `Bearer ${accessToken}`,
+        "x-client-id": userId
       },
       body: JSON.stringify(payload)
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Network response was not ok (Status: ${response.status})`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      setLoading(false);
-      console.log("Payment API response:", data);
-      
-      if (data && data.data) {
-        console.log("Payment URL:", data.data);
-        setPaymentUrl(data.data);
-        setShowWebView(true);
-      } else {
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok (Status: ${response.status})`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        setLoading(false);
+        console.log("Payment API response:", data);
+        if (data && data.data) {
+          console.log("Payment URL:", data.data);
+          setPaymentUrl(data.data);
+          setShowWebView(true);
+        } else {
+          Alert.alert(
+            language === "vi" ? "Lỗi" : "Error",
+            language === "vi" ? "Không thể tạo URL thanh toán" : "Cannot create payment URL"
+          );
+        }
+      })
+      .catch(error => {
+        setLoading(false);
+        console.error("Error:", error);
+        // Hiện hộp thoại hỏi người dùng có muốn thử phương thức thanh toán trực tiếp không
         Alert.alert(
-          language === "vi" ? "Lỗi" : "Error",
-          language === "vi" ? "Không thể tạo URL thanh toán" : "Cannot create payment URL"
-        );
-      }
-    })
-    .catch(error => {
-      setLoading(false);
-      console.error("Error:", error);
-      
-      // Hiện hộp thoại hỏi người dùng có muốn thử phương thức thanh toán trực tiếp không
-      Alert.alert(
-        language === "vi" ? "Lỗi kết nối" : "Connection Error",
-        language === "vi" 
-          ? "Không thể kết nối đến server. Bạn có muốn thử phương thức thanh toán trực tiếp không?" 
-          : "Cannot connect to server. Would you like to try direct payment method?",
-        [
-          {
-            text: language === "vi" ? "Hủy" : "Cancel",
-            style: "cancel"
-          },
-          {
-            text: language === "vi" ? "Đồng ý" : "Yes",
-            onPress: () => {
-              setDirectPaymentMode(true);
-              const directUrl = createDirectPaymentUrl();
-              setPaymentUrl(directUrl);
-              setShowWebView(true);
+          language === "vi" ? "Lỗi kết nối" : "Connection Error",
+          language === "vi"
+            ? "Không thể kết nối đến server. Bạn có muốn thử phương thức thanh toán trực tiếp không?"
+            : "Cannot connect to server. Would you like to try direct payment method?",
+          [
+            {
+              text: language === "vi" ? "Hủy" : "Cancel",
+              style: "cancel"
+            },
+            {
+              text: language === "vi" ? "Đồng ý" : "Yes",
+              onPress: () => {
+                setDirectPaymentMode(true);
+                const directUrl = createDirectPaymentUrl();
+                setPaymentUrl(directUrl);
+                setShowWebView(true);
+              }
             }
-          }
-        ]
-      );
-    });
+          ]
+        );
+      });
   };
 
-  // Xử lý kết quả thanh toán từ VNPAY
+  // Cải thiện xử lý kết quả thanh toán từ VNPAY
   const handleWebViewNavigationStateChange = (navState) => {
     console.log("Current URL:", navState.url);
-    
     // Xử lý URLs có thể mở ứng dụng khác (như app ngân hàng)
-    if (navState.url.startsWith('viba:') || 
-        navState.url.startsWith('vcb:') || 
+    if (navState.url.startsWith('viba:') ||
+        navState.url.startsWith('vcb:') ||
         navState.url.startsWith('vietin:') ||
         navState.url.startsWith('vietcom:') ||
         navState.url.startsWith('tpbank:') ||
         navState.url.startsWith('momo:')) {
-      
       Linking.canOpenURL(navState.url).then(supported => {
         if (supported) {
           Linking.openURL(navState.url);
@@ -389,17 +576,15 @@ const PaymentScreen = ({ navigation, route }) => {
       });
       return;
     }
-    
+
     // Kiểm tra nếu URL chứa vnpay_return (URL callback)
     if (navState.url.includes("vnpay_return")) {
-      // Xử lý kết quả thanh toán
-      setShowWebView(false);
-      
+      console.log("Payment callback detected:", navState.url);
       // Parse thông tin từ URL response
       const params = parseQueryParams(navState.url);
       const vnpResponseCode = params['vnp_ResponseCode'];
       const vnpTxnRef = params['vnp_TxnRef']; // Mã đơn hàng từ VNPAY
-      
+
       // Tạo đối tượng lưu thông tin VNPAY
       const vnpResponseData = {
         vnp_ResponseCode: vnpResponseCode,
@@ -410,43 +595,43 @@ const PaymentScreen = ({ navigation, route }) => {
         vnp_BankCode: params['vnp_BankCode'],
         vnp_PayDate: params['vnp_PayDate']
       };
-      
+
       console.log("VNPAY Response:", vnpResponseData);
-      
+      setShowWebView(false); // Đóng WebView ngay khi nhận được callback
+
       // Kiểm tra kết quả thanh toán từ URL
       if (vnpResponseCode === '00') {
         // Thanh toán thành công - TẠO ĐƠN HÀNG TRONG HỆ THỐNG
+        setLoading(true); // Thêm loading indicator
+        
         createOrderAfterPayment(vnpResponseData)
           .then((orderResult) => {
-            // Xóa giỏ hàng
-            clearCart();
-            
-            // Chuyển đến trang xác nhận đơn hàng
-            navigation.navigate("OrderConfirmation", {
-              orderDetails: {
-                ...formData,
-                totalAmount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
-                items: orderItems,
-                orderNumber: vnpTxnRef, // Sử dụng đúng mã đơn hàng từ VNPAY
-                orderDate: new Date().toISOString(),
-                paymentStatus: language === "vi" ? "Đã thanh toán" : "Paid",
-                paymentMethod: "vnpay"
-              }
-            });
+            setLoading(false);
+            if (orderResult) {
+              // Xóa giỏ hàng
+              clearCart();
+              // Chuyển đến trang xác nhận đơn hàng
+              navigation.navigate("OrderConfirmation", {
+                orderDetails: {
+                  ...formData,
+                  totalAmount: parseInt(vnpResponseData.vnp_Amount) / 100 || totalAmount,
+                  items: orderItems,
+                  orderNumber: vnpTxnRef, // Sử dụng đúng mã đơn hàng từ VNPAY
+                  orderDate: new Date().toISOString(),
+                  paymentStatus: language === "vi" ? "Đã thanh toán" : "Paid",
+                  paymentMethod: "vnpay"
+                }
+              });
+            }
+            // Không cần else vì đã xử lý ở trong hàm createOrderAfterPayment
           })
           .catch(error => {
+            setLoading(false);
             console.error("Failed to process order after payment:", error);
-            // Vẫn hiển thị màn hình xác nhận dù có lỗi
-            navigation.navigate("OrderConfirmation", {
-              orderDetails: {
-                ...formData,
-                totalAmount,
-                items: orderItems,
-                orderNumber: vnpTxnRef, // Vẫn dùng mã từ VNPAY
-                orderDate: new Date().toISOString(),
-                paymentStatus: language === "vi" ? "Đã thanh toán" : "Paid"
-              }
-            });
+            Alert.alert(
+              language === "vi" ? "Lỗi" : "Error",
+              language === "vi" ? "Lỗi xử lý đơn hàng" : "Error processing order"
+            );
           });
       } else {
         // Thanh toán thất bại
@@ -463,148 +648,191 @@ const PaymentScreen = ({ navigation, route }) => {
     return (
       <PaymentWebView
         paymentUrl={paymentUrl}
-        language={language}
         onNavigationStateChange={handleWebViewNavigationStateChange}
         onClose={() => setShowWebView(false)}
+        language={language}
       />
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, theme === "dark" && styles.darkContainer]}>
+    <SafeAreaView style={[styles.container, theme === 'dark' && styles.darkContainer]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={20} color={theme === "dark" ? "#FFFFFF" : "#000000"} />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={20} color={theme === 'dark' ? "#FFFFFF" : "#000000"} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, theme === "dark" && styles.darkText]}>
+        <Text style={[styles.headerTitle, theme === 'dark' && styles.darkText]}>
           {language === "vi" ? "Thanh toán" : "Checkout"}
         </Text>
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={[styles.sectionContainer, theme === "dark" && styles.darkSectionContainer]}>
-          <Text style={[styles.sectionTitle, theme === "dark" && styles.darkText]}>
-            {language === "vi" ? "Thông tin giao hàng" : "Delivery Information"}
+      {!authLoaded ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6A5ACD" />
+          <Text style={styles.loadingText}>
+            {language === "vi" ? "Đang tải..." : "Loading..."}
           </Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, theme === "dark" && styles.darkSubText]}>
-              {language === "vi" ? "Họ và tên" : "Full Name"}*
-            </Text>
-            <TextInput
-              style={[styles.input, theme === "dark" && styles.darkInput]}
-              placeholder={language === "vi" ? "Nhập họ tên" : "Enter your name"}
-              placeholderTextColor={theme === "dark" ? "#999999" : "#BBBBBB"}
-              value={formData.fullName}
-              onChangeText={(text) => handleInputChange("fullName", text)}
-            />
-          </View>
-          
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, theme === "dark" && styles.darkSubText]}>
-              {language === "vi" ? "Số điện thoại" : "Phone Number"}*
-            </Text>
-            <TextInput
-              style={[styles.input, theme === "dark" && styles.darkInput]}
-              placeholder={language === "vi" ? "Nhập số điện thoại" : "Enter phone number"}
-              placeholderTextColor={theme === "dark" ? "#999999" : "#BBBBBB"}
-              keyboardType="phone-pad"
-              value={formData.phone}
-              onChangeText={(text) => handleInputChange("phone", text)}
-            />
-          </View>
-          
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, theme === "dark" && styles.darkSubText]}>
-              {language === "vi" ? "Địa chỉ" : "Address"}*
-            </Text>
-            <TextInput
-              style={[styles.input, theme === "dark" && styles.darkInput]}
-              placeholder={language === "vi" ? "Nhập địa chỉ đầy đủ" : "Enter full address"}
-              placeholderTextColor={theme === "dark" ? "#999999" : "#BBBBBB"}
-              value={formData.address}
-              onChangeText={(text) => handleInputChange("address", text)}
-            />
-          </View>
-
-          {/* Thêm lựa chọn phương thức thanh toán */}
-          <View style={styles.paymentMethodContainer}>
-            <Text style={[styles.inputLabel, theme === "dark" && styles.darkSubText]}>
-              {language === "vi" ? "Phương thức thanh toán" : "Payment Method"}
-            </Text>
-            <View style={styles.methodOptions}>
+        </View>
+      ) : (
+        <>
+          {!accessToken && (
+            <View style={styles.warningContainer}>
+              <Icon name="exclamation-triangle" size={20} color="#FFA500" />
+              <Text style={styles.warningText}>
+                {language === "vi" 
+                  ? "Bạn chưa đăng nhập. Đăng nhập để lưu đơn hàng vào tài khoản của bạn." 
+                  : "You are not logged in. Login to save your order to your account."}
+              </Text>
               <TouchableOpacity 
-                style={[styles.methodOption, !directPaymentMode && styles.methodOptionActive]} 
-                onPress={() => setDirectPaymentMode(false)}
+                style={styles.loginButton}
+                onPress={() => navigation.navigate("Login", { returnToPaymentScreen: true })}
               >
-                <Text style={[styles.methodText, !directPaymentMode && styles.methodTextActive]}>
-                  {language === "vi" ? "Qua tài khoản" : "Via account"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.methodOption, directPaymentMode && styles.methodOptionActive]} 
-                onPress={() => setDirectPaymentMode(true)}
-              >
-                <Text style={[styles.methodText, directPaymentMode && styles.methodTextActive]}>
-                  {language === "vi" ? "Thanh toán trực tiếp" : "Direct payment"}
+                <Text style={styles.loginButtonText}>
+                  {language === "vi" ? "Đăng nhập" : "Login"}
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          )}
 
-        <View style={[styles.orderSummary, theme === "dark" && styles.darkSectionContainer]}>
-          <Text style={[styles.sectionTitle, theme === "dark" && styles.darkText]}>
-            {language === "vi" ? "Tổng thanh toán" : "Order Summary"}
-          </Text>
-          
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryText, theme === "dark" && styles.darkSubText]}>
-              {language === "vi" ? "Tổng tiền hàng" : "Subtotal"}
-            </Text>
-            <Text style={[styles.summaryValue, theme === "dark" && styles.darkText]}>
-              {totalAmount.toLocaleString()} đ
-            </Text>
-          </View>
-          
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryText, theme === "dark" && styles.darkSubText]}>
-              {language === "vi" ? "Phí vận chuyển" : "Shipping Fee"}
-            </Text>
-            <Text style={[styles.summaryValue, theme === "dark" && styles.darkText]}>
-              {language === "vi" ? "Miễn phí" : "Free"}
-            </Text>
-          </View>
-          
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={[styles.totalText, theme === "dark" && styles.darkText]}>
-              {language === "vi" ? "Tổng thanh toán" : "Total"}
-            </Text>
-            <Text style={styles.totalValue}>
-              {totalAmount.toLocaleString()} đ
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={[styles.sectionContainer, theme === 'dark' && styles.darkSectionContainer]}>
+              <Text style={[styles.sectionTitle, theme === 'dark' && styles.darkText]}>
+                {language === "vi" ? "Thông tin giao hàng" : "Delivery Information"}
+              </Text>
 
-      <View style={styles.buttonContainer}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#6A5ACD" />
-        ) : (
-          <TouchableOpacity 
-            style={[styles.placeOrderButton, directPaymentMode && styles.directPaymentButton]} 
-            onPress={handlePlaceOrder}
-          >
-            <Text style={styles.placeOrderButtonText}>
-              {directPaymentMode 
-                ? (language === "vi" ? "Thanh toán trực tiếp" : "Direct Payment")
-                : (language === "vi" ? "Đặt hàng" : "Place Order")
-              }
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, theme === 'dark' && styles.darkSubText]}>
+                  {language === "vi" ? "Họ và tên" : "Full Name"}*
+                </Text>
+                <TextInput
+                  style={[styles.input, theme === 'dark' && styles.darkInput]}
+                  value={formData.fullName}
+                  onChangeText={(text) => handleInputChange("fullName", text)}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, theme === 'dark' && styles.darkSubText]}>
+                  {language === "vi" ? "Số điện thoại" : "Phone Number"}*
+                </Text>
+                <TextInput
+                  style={[styles.input, theme === 'dark' && styles.darkInput]}
+                  keyboardType="phone-pad"
+                  value={formData.phone}
+                  onChangeText={(text) => handleInputChange("phone", text)}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, theme === 'dark' && styles.darkSubText]}>
+                  {language === "vi" ? "Địa chỉ" : "Address"}*
+                </Text>
+                <TextInput
+                  style={[styles.input, styles.textArea, theme === 'dark' && styles.darkInput]}
+                  multiline
+                  value={formData.address}
+                  onChangeText={(text) => handleInputChange("address", text)}
+                />
+              </View>
+
+              {/* Thêm lựa chọn phương thức thanh toán */}
+              <View style={styles.paymentMethodContainer}>
+                <Text style={[styles.inputLabel, theme === 'dark' && styles.darkSubText]}>
+                  {language === "vi" ? "Phương thức thanh toán" : "Payment Method"}
+                </Text>
+                <View style={styles.methodOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.methodOption,
+                      !directPaymentMode && styles.methodOptionActive
+                    ]}
+                    onPress={() => setDirectPaymentMode(false)}
+                  >
+                    <Icon name="credit-card" size={18} color={!directPaymentMode ? "#6A5ACD" : "#666666"} />
+                    <Text style={[
+                      styles.methodText,
+                      !directPaymentMode && styles.methodTextActive,
+                      theme === 'dark' && styles.darkSubText
+                    ]}>
+                      {language === "vi" ? "Qua tài khoản" : "Via account"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.methodOption,
+                      directPaymentMode && styles.methodOptionActive
+                    ]}
+                    onPress={() => setDirectPaymentMode(true)}
+                  >
+                    <Icon name="university" size={18} color={directPaymentMode ? "#6A5ACD" : "#666666"} />
+                    <Text style={[
+                      styles.methodText,
+                      directPaymentMode && styles.methodTextActive,
+                      theme === 'dark' && styles.darkSubText
+                    ]}>
+                      {language === "vi" ? "Thanh toán trực tiếp" : "Direct payment"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.orderSummary, theme === 'dark' && styles.darkSectionContainer]}>
+              <Text style={[styles.sectionTitle, theme === 'dark' && styles.darkText]}>
+                {language === "vi" ? "Tổng thanh toán" : "Order Summary"}
+              </Text>
+
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryText, theme === 'dark' && styles.darkSubText]}>
+                  {language === "vi" ? "Tổng tiền hàng" : "Subtotal"}
+                </Text>
+                <Text style={[styles.summaryValue, theme === 'dark' && styles.darkText]}>
+                  {totalAmount.toLocaleString()} đ
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryText, theme === 'dark' && styles.darkSubText]}>
+                  {language === "vi" ? "Phí vận chuyển" : "Shipping Fee"}
+                </Text>
+                <Text style={[styles.summaryValue, theme === 'dark' && styles.darkText]}>
+                  {language === "vi" ? "Miễn phí" : "Free"}
+                </Text>
+              </View>
+
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={[styles.totalText, theme === 'dark' && styles.darkText]}>
+                  {language === "vi" ? "Tổng thanh toán" : "Total"}
+                </Text>
+                <Text style={styles.totalValue}>
+                  {totalAmount.toLocaleString()} đ
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.buttonContainer}>
+            {loading ? (
+              <ActivityIndicator size="large" color="#6A5ACD" />
+            ) : (
+              <TouchableOpacity
+                style={[styles.placeOrderButton, directPaymentMode && styles.directPaymentButton]}
+                onPress={handlePlaceOrder}
+              >
+                <Text style={styles.placeOrderButtonText}>
+                  {directPaymentMode
+                    ? (language === "vi" ? "Thanh toán trực tiếp" : "Direct Payment")
+                    : (language === "vi" ? "Đặt hàng" : "Place Order")}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -786,14 +1014,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#6A5ACD"
   },
   paymentMethodContainer: {
     marginTop: 10,
@@ -821,6 +1050,33 @@ const styles = StyleSheet.create({
   },
   methodTextActive: {
     color: '#6A5ACD',
+    fontWeight: '600',
+  },
+  warningContainer: {
+    backgroundColor: '#FFF8E1',
+    padding: 15,
+    marginHorizontal: 15,
+    marginTop: 10,
+    borderRadius: 8,
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  warningText: {
+    marginLeft: 10,
+    color: '#795548',
+    flex: 1,
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  loginButton: {
+    backgroundColor: '#FFA000',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    marginTop: 5,
+  },
+  loginButtonText: {
+    color: 'white',
     fontWeight: '600',
   }
 });

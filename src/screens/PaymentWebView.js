@@ -1,34 +1,39 @@
-import React from 'react';
-import { SafeAreaView, View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView, View, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 const PaymentWebView = ({ paymentUrl, onNavigationStateChange, onClose, language }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Icon name="arrow-left" size={20} color="#000" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, backgroundColor: '#f8f8f8', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
+        <TouchableOpacity style={{ padding: 10 }} onPress={onClose}>
+          <Icon name="times" size={22} color="#555" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Text style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 'bold' }}>
           {language === "vi" ? "Thanh toán VNPAY" : "VNPAY Payment"}
         </Text>
-        <View style={styles.placeholder} />
+        <View style={{ width: 40 }} />
       </View>
       
-      <WebView 
+      <WebView
         source={{ uri: paymentUrl }}
-        style={styles.webView}
+        style={{ flex: 1 }}
         onNavigationStateChange={onNavigationStateChange}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         startInLoadingState={true}
-        renderLoading={() => (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6A5ACD" />
-          </View>
-        )}
+        onLoadStart={() => setIsLoading(true)}
+        onLoadEnd={() => setIsLoading(false)}
       />
+      
+      {isLoading && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
+          <ActivityIndicator size="large" color="#6A5ACD" />
+        </View>
+      )}
     </SafeAreaView>
   );
 };

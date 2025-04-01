@@ -29,7 +29,6 @@ import BagsScreen from "../screens/BagsScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Create each tab's stack navigator for better navigation control
 const HomeStack = () => {
   const { language } = useSettings();
   return (
