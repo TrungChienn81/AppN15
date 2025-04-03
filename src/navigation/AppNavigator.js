@@ -38,6 +38,11 @@ const HomeStack = () => {
         component={HomeScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen 
+        name="Search" 
+        component={SearchScreen} 
+        options={{ headerShown: false }} 
+      />
       <Stack.Screen
         name="ProductDetail"
         component={ProductDetailScreen}

@@ -23,6 +23,7 @@ const ProductDetailScreen = ({ route }) => {
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
   // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = (size) => {
     if (!size) {
@@ -46,8 +47,12 @@ const ProductDetailScreen = ({ route }) => {
         },
         {
           text: "Đến giỏ hàng",
-          onPress: () => navigation.navigate("MainTabs", { screen: "Cart" })
-
+          onPress: () => navigation.navigate('Main', {
+            screen: 'CartStack',
+            params: {
+              screen: 'CartMain'
+            }
+          })
         }
       ]
     );
@@ -62,7 +67,6 @@ const ProductDetailScreen = ({ route }) => {
       return `http://10.0.2.2:3055${imgUrl}`;
     }
   };
-
 
   useEffect(() => {
     const fetchRelatedProducts = async () => {
@@ -109,11 +113,20 @@ const ProductDetailScreen = ({ route }) => {
     fetchRelatedProducts();
   }, [product._id, product.title, product.category]);
 
-  // Thêm nút điều hướng đến giỏ hàng trong header
+  // Sửa lại phần điều hướng trong header
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity style={{ marginRight: 15 }} onPress={() => navigation.navigate("MainTabs", { screen: "Cart" })}>
+        <TouchableOpacity
+          style={{ marginRight: 15 }}
+          onPress={() => {
+            navigation.navigate('Main', {
+              screen: 'CartStack',
+              params: {
+                screen: 'CartMain'
+              }
+            });
+          }}>
           <Icon name="shopping-cart" size={24} color="#FF4081" />
         </TouchableOpacity>
       ),
@@ -123,27 +136,26 @@ const ProductDetailScreen = ({ route }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Phần hình ảnh sản phẩm */}
-      <View style={styles.imageContainer}>
-        <TouchableOpacity
-          onPress={() => setShowZoomedImage(true)}
-          activeOpacity={0.9}
-        >
-          {imageLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#FF4081" />
-            </View>
-          )}
-          <Image
-            source={{ uri: getImageUrl(product.img) }}
-            style={styles.mainImage}
-            onLoadStart={() => setImageLoading(true)}
-            onLoadEnd={() => setImageLoading(false)}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.zoomIconContainer}>
-          <Icon name="zoom-in" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.imageContainer}
+        onPress={() => setShowZoomedImage(true)}
+        activeOpacity={0.9}
+      >
+        {imageLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF4081" />
+          </View>
+        )}
+        <Image
+          source={{ uri: getImageUrl(product.img) }}
+          style={styles.mainImage}
+          onLoadStart={() => setImageLoading(true)}
+          onLoadEnd={() => setImageLoading(false)}
+        />
+        <View style={styles.zoomIconContainer}>
+          <Icon name="zoom-in" size={24} color="#FFFFFF" />
+        </View>
+      </TouchableOpacity>
 
       {/* Modal hiển thị ảnh phóng to */}
       {showZoomedImage && (
@@ -152,7 +164,7 @@ const ProductDetailScreen = ({ route }) => {
             style={styles.closeButton}
             onPress={() => setShowZoomedImage(false)}
           >
-            <Icon name="close" size={24} color="#fff" />
+            <Icon name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Image
             source={{ uri: getImageUrl(product.img) }}
@@ -169,14 +181,7 @@ const ProductDetailScreen = ({ route }) => {
 
         {/* Thêm phần rating */}
         <View style={styles.ratingContainer}>
-          <StarRatingDisplay
-            rating={product.avgReview || 0}
-            color="#FFD700"
-            emptyColor="#ddd"
-            starSize={20}
-            maxStars={5}
-            style={{ marginRight: 8 }}
-          />
+          <StarRatingDisplay rating={product.avgReview || 0} starSize={18} />
           <Text style={styles.ratingText}>
             {product.avgReview ? `${product.avgReview}/5` : 'Chưa có đánh giá'}
             {product.reviews && product.reviews.length > 0 ? ` (${product.reviews.length} đánh giá)` : ''}
@@ -212,22 +217,15 @@ const ProductDetailScreen = ({ route }) => {
             <Text>Không có thông tin kích thước</Text>
           )}
         </View>
+
         {product.reviews && product.reviews.length > 0 && (
           <View style={styles.reviewsContainer}>
             <Text style={styles.reviewsTitle}>ĐÁNH GIÁ SẢN PHẨM</Text>
             {product.reviews.map((review, index) => (
               <View key={index} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
-                  <StarRatingDisplay
-                    rating={review.rating}
-                    color="#FFD700"
-                    emptyColor="#ddd"
-                    starSize={16}
-                    maxStars={5}
-                  />
-                  <Text style={styles.reviewDate}>
-                    {new Date(review.createdAt).toLocaleDateString('vi-VN')}
-                  </Text>
+                  <StarRatingDisplay rating={review.rating || 0} starSize={14} />
+                  <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString('vi-VN')}</Text>
                 </View>
                 <Text style={styles.reviewComment}>{review.comment}</Text>
               </View>
@@ -237,7 +235,6 @@ const ProductDetailScreen = ({ route }) => {
 
         <Text style={styles.productCode}>Mã số: #{product._id?.substring(0, 7) || "0024228"}</Text>
         <Text style={styles.productFullTitle}>{product.title}</Text>
-
 
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionTitle}>1. Kiểu sản phẩm: {product.title.split(" ")[0]}</Text>
@@ -249,8 +246,6 @@ const ProductDetailScreen = ({ route }) => {
           )}
         </View>
       </View>
-
-
 
       {/* Có thể bạn quan tâm */}
       {relatedProducts.length > 0 && (

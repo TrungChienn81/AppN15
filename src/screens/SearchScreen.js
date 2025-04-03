@@ -132,7 +132,13 @@ const SearchScreen = ({ route }) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.button}
-            onPress={() => navigation.navigate("ProductDetail", { product: item })}
+            onPress={() => navigation.navigate('Main', {
+              screen: 'HomeStack',
+              params: {
+                screen: 'ProductDetail',
+                params: { product: item }
+              }
+            })}
           >
             <Text style={styles.buttonText}>
               {language === "vi" ? "Xem chi tiết" : "View Details"}

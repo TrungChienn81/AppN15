@@ -799,13 +799,13 @@ const PaymentScreen = ({ navigation, route }) => {
                     ]}
                     onPress={() => setDirectPaymentMode(false)}
                   >
-                    <Icon name="credit-card" size={18} color={!directPaymentMode ? "#6A5ACD" : "#666666"} />
+                    <Icon name="home" size={18} color={!directPaymentMode ? "#6A5ACD" : "#666666"} />
                     <Text style={[
                       styles.methodText,
                       !directPaymentMode && styles.methodTextActive,
                       theme === 'dark' && styles.darkSubText
                     ]}>
-                      {language === "vi" ? "Qua tài khoản" : "Via account"}
+                      {language === "vi" ? "Thanh toán khi giao hàng" : "Via account"}
                     </Text>
                   </TouchableOpacity>
 
@@ -816,13 +816,13 @@ const PaymentScreen = ({ navigation, route }) => {
                     ]}
                     onPress={() => setDirectPaymentMode(true)}
                   >
-                    <Icon name="university" size={18} color={directPaymentMode ? "#6A5ACD" : "#666666"} />
+                    <Icon name="credit-card" size={18} color={directPaymentMode ? "#6A5ACD" : "#666666"} />
                     <Text style={[
                       styles.methodText,
                       directPaymentMode && styles.methodTextActive,
                       theme === 'dark' && styles.darkSubText
                     ]}>
-                      {language === "vi" ? "Thanh toán trực tiếp" : "Direct payment"}
+                      {language === "vi" ? "Thanh toán qua VNPAY" : "Direct payment"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -873,7 +873,7 @@ const PaymentScreen = ({ navigation, route }) => {
               >
                 <Text style={styles.placeOrderButtonText}>
                   {directPaymentMode
-                    ? (language === "vi" ? "Thanh toán trực tiếp" : "Direct Payment")
+                    ? (language === "vi" ? "Thanh toán qua VNPay" : "Direct Payment")
                     : (language === "vi" ? "Đặt hàng" : "Place Order")}
                 </Text>
               </TouchableOpacity>
