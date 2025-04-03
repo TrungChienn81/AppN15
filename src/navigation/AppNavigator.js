@@ -20,7 +20,7 @@ import ProductDetailScreen from "../screens/ProductDetailScreen";
 import TopRatedScreen from "../screens/TopRatedScreen";
 import PaymentScreen from "../screens/PaymentScreen";
 import OrderConfirmationScreen from "../screens/OrderConfirmationScreen";
-
+import OrderTrackingScreen from "../screens/OrderTrackingScreen";
 // Other screens
 import DressScreen from "../screens/DressScreen";
 import ShoesScreen from "../screens/ShoesScreen";
@@ -117,6 +117,7 @@ const CartStack = () => {
       <Stack.Screen name="CartMain" component={CartScreen} />
       <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
       <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
+      <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
     </Stack.Navigator>
   );
 };

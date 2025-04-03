@@ -23,6 +23,7 @@ const ProductDetailScreen = ({ route }) => {
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatedProduct, setUpdatedProduct] = useState(product);
 
   // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = (size) => {
@@ -133,6 +134,26 @@ const ProductDetailScreen = ({ route }) => {
     });
   }, [navigation]);
 
+  const fetchProductDetails = async () => {
+    try {
+      const response = await fetch(`http://10.0.2.2:3055/v1/api/product/${product._id}`);
+      const data = await response.json();
+      if (data.status === 200) {
+        setUpdatedProduct(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchProductDetails();
+    });
+
+    return unsubscribe;
+  }, [navigation, product._id]);
+
   return (
     <ScrollView style={styles.container}>
       {/* Phần hình ảnh sản phẩm */}
@@ -190,8 +211,8 @@ const ProductDetailScreen = ({ route }) => {
 
         {/* Kích thước và tình trạng kho */}
         <View style={styles.sizeContainer}>
-          {product.sizes && product.sizes.length > 0 ? (
-            product.sizes.map((sizeItem, index) => (
+          {updatedProduct.sizes && updatedProduct.sizes.length > 0 ? (
+            updatedProduct.sizes.map((sizeItem, index) => (
               <View key={index} style={styles.sizeRow}>
                 <Text style={styles.sizeText}>{`Size ${sizeItem.size}`}</Text>
                 {sizeItem.quantity > 0 ? (

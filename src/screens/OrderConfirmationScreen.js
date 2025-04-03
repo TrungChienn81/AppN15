@@ -292,19 +292,17 @@ const OrderConfirmationScreen = ({ navigation, route }) => {
                 </Animatable.View>
 
                 <Animatable.View animation="fadeInUp" delay={600} style={styles.buttonsContainer}>
+                    
                     <TouchableOpacity
                         style={styles.trackOrderButton}
-                        onPress={() => {
-                            // You would typically navigate to an order tracking screen
-                            // For now, we'll just navigate back to home
-                            navigation.navigate("Home");
-                        }}
+                        onPress={() => navigation.navigate("OrderTracking", {
+                            orderId: orderDetails.orderNumber
+                        })}
                     >
                         <Text style={styles.trackOrderButtonText}>
                             {language === "vi" ? "Theo dõi đơn hàng" : "Track Order"}
                         </Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                         style={styles.continueShopping}
                         onPress={() => navigation.navigate("HomeStack", { screen: "HomeScreen" })}
