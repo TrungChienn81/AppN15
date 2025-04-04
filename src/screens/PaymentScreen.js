@@ -736,7 +736,7 @@ const PaymentScreen = ({ navigation, route }) => {
                 </Text>
                 <TextInput
                   style={[styles.input, theme === 'dark' && styles.darkInput]}
-                  placeholder={language === "vi" ? "Nguyễn Văn A" : "John Doe"}
+                  placeholder={language === "vi" ? "Điền tên của bạn" : "Type your name"}
                   placeholderTextColor={theme === 'dark' ? '#777777' : '#AAAAAA'}
                   value={formData.fullName}
                   onChangeText={(text) => handleInputChange("fullName", text)}
@@ -749,7 +749,7 @@ const PaymentScreen = ({ navigation, route }) => {
                 </Text>
                 <TextInput
                   style={[styles.input, theme === 'dark' && styles.darkInput]}
-                  placeholder="0912345678"
+                  placeholder="Nhập số điện thoại của bạn"
                   placeholderTextColor={theme === 'dark' ? '#777777' : '#AAAAAA'}
                   keyboardType="phone-pad"
                   value={formData.phone}
@@ -763,7 +763,7 @@ const PaymentScreen = ({ navigation, route }) => {
                 </Text>
                 <TextInput
                   style={[styles.input, styles.textArea, theme === 'dark' && styles.darkInput]}
-                  placeholder={language === "vi" ? "Số nhà, đường, phường, quận, thành phố" : "Address details"}
+                  placeholder={language === "vi" ? "Địa chỉ của bạn" : "Address details"}
                   placeholderTextColor={theme === 'dark' ? '#777777' : '#AAAAAA'}
                   multiline
                   numberOfLines={3}

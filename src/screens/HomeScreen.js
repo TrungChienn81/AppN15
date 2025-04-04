@@ -4,9 +4,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   StyleSheet,
   ActivityIndicator,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
   Image
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -17,6 +20,7 @@ const HomeScreen = ({ navigation }) => {
   const { language, theme } = useSettings();
   const [topRatedProducts, setTopRatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [chatVisible, setChatVisible] = useState(false); // State để kiểm soát hiển thị chatbox
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,16 +52,22 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // Hàm để mở/đóng chatbox
+  const toggleChat = () => {
+    setChatVisible(!chatVisible);
+  };
+
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
+      <View style={[styles.container, styles.centerContent, theme === "dark" && styles.darkContainer]}>
         <ActivityIndicator size="large" color="#6A5ACD" />
       </View>
     );
   }
 
-  return (
-    <ScrollView style={[styles.container, theme === "dark" && styles.darkContainer]}>
+  // Header component chứa tất cả nội dung trước đây trong ScrollView
+  const HeaderComponent = () => (
+    <>
       <Text style={[styles.title, theme === "dark" && styles.darkText]}>
         {language === "vi" ? "Chào mừng đến với cửa hàng của Nhóm 15" : "Welcome to the store"}
       </Text>
@@ -67,7 +77,7 @@ const HomeScreen = ({ navigation }) => {
         <TextInput
           style={[styles.searchInput, theme === "dark" && styles.darkInput]}
           placeholder={language === "vi" ? "Tìm kiếm..." : "Search..."}
-          placeholderTextColor={theme === "dark" ? "#999" : "#777"}
+          placeholderTextColor={theme === "dark" ? "#777" : "#999"}
           value={query}
           onChangeText={setQuery}
         />
@@ -166,7 +176,7 @@ const HomeScreen = ({ navigation }) => {
               {language === "vi" ? " Sản phẩm nổi bật" : " Top Rated Products"}
             </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.viewAllButton}
             onPress={() => navigation.navigate("TopRated")}
           >
@@ -194,7 +204,128 @@ const HomeScreen = ({ navigation }) => {
           ))}
         </View>
       </View>
-    </ScrollView>
+    </>
+  );
+
+  // Component custom cho ChatBox đặt trong modal
+  const ChatBoxModal = () => {
+    const [messages, setMessages] = useState([]);
+    const [input, setInput] = useState("");
+
+    const sendMessage = async () => {
+      if (!input.trim()) return;
+      
+      // Thêm tin nhắn người dùng vào danh sách
+      const userMessage = { role: "user", content: input };
+      setMessages(prev => [...prev, userMessage]);
+
+      try {
+        // Gọi API từ server backend của bạn
+        const response = await fetch(
+          "http://10.0.2.2:3055/v1/api/chatbot/query",
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ question: input }),
+          }
+        );
+        
+        const data = await response.json();
+        const assistantReply = data.answer;
+        setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
+      } catch (error) {
+        console.error("Lỗi khi gửi tin nhắn:", error);
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: "Có lỗi xảy ra, vui lòng thử lại." }
+        ]);
+      }
+      setInput("");
+    };
+
+    return (
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.chatContainer}>
+          {/* Phần hiển thị tin nhắn */}
+          <FlatList
+            data={messages}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <View style={[
+                styles.message, 
+                item.role === "user" ? styles.userMessage : styles.assistantMessage
+              ]}>
+                <Text style={item.role === "user" ? styles.userMessageText : styles.assistantMessageText}>
+                  {item.content}
+                </Text>
+              </View>
+            )}
+            style={styles.messageList}
+          />
+          
+          {/* Phần nhập tin nhắn (fixed ở cuối) */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Nhập tin nhắn..."
+              value={input}
+              onChangeText={setInput}
+              multiline
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+              <Text style={styles.sendButtonText}>Gửi</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  };
+
+  return (
+    <View style={[styles.container, theme === "dark" && styles.darkContainer]}>
+      <FlatList
+        style={{ flex: 1 }}
+        data={[{ key: 'main' }]}
+        renderItem={() => null}
+        ListHeaderComponent={<HeaderComponent />}
+        keyExtractor={item => item.key}
+      />
+
+      {/* Nút nhỏ hỗ trợ trực tuyến */}
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={toggleChat}
+      >
+        <Icon name="chat" size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Modal hiển thị ChatBox khi nút được nhấn */}
+      <Modal
+        visible={chatVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setChatVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {language === "vi" ? "Hỗ trợ trực tuyến" : "Online Support"}
+              </Text>
+              <TouchableOpacity onPress={() => setChatVisible(false)}>
+                <Icon name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ChatBoxModal />
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -351,6 +482,114 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     color: "#6A5ACD",
+  },
+  // Style cho nút hỗ trợ trực tuyến dạng nổi
+  floatingButton: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#6A5ACD',
+    bottom: 20,
+    right: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 999,
+  },
+  // Style cho modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '85%', // Tăng chiều cao modal
+    flexDirection: 'column',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  // Style cho phần chat
+  chatContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  messageList: {
+    flex: 1,
+    padding: 10,
+  },
+  message: {
+    padding: 10,
+    borderRadius: 20,
+    marginVertical: 6,
+    maxWidth: "80%",
+  },
+  userMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: "#6A5ACD",
+  },
+  assistantMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: "#ECECEC",
+  },
+  userMessageText: {
+    fontSize: 16,
+    color: "#fff",
+  },
+  assistantMessageText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  // Style cho phần nhập tin nhắn (ở dưới cùng)
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor: '#fff',
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10, // Thêm padding cho iOS
+  },
+  input: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
+    padding: 10,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 20,
+    fontSize: 16,
+  },
+  sendButton: {
+    backgroundColor: "#6A5ACD",
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sendButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

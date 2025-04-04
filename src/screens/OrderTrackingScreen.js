@@ -14,13 +14,19 @@ import { useSettings } from "../context/SettingsContext";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrderTrackingScreen = ({ route, navigation }) => {
-  const { orderId } = route.params;
+  const { orderId } = route.params || {};
   const { language, theme } = useSettings();
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!orderId) {
+      setError(language === "vi" ? "Không có mã đơn hàng" : "Order ID is missing");
+      setLoading(false);
+      return;
+    }
+    
     fetchOrderDetails();
     
     // Tự động cập nhật trạng thái mỗi 60 giây
@@ -31,6 +37,10 @@ const OrderTrackingScreen = ({ route, navigation }) => {
 
   const fetchOrderDetails = async () => {
     try {
+      if (!orderId) {
+        throw new Error(language === "vi" ? "Không có mã đơn hàng" : "Order ID is missing");
+      }
+      
       setLoading(true);
       
       // Lấy token và userId từ AsyncStorage
