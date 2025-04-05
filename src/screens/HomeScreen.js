@@ -42,7 +42,6 @@ const HomeScreen = ({ navigation }) => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -59,7 +58,7 @@ const HomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent, theme === "dark" && styles.darkContainer]}>
+      <View style={[styles.container, styles.centerContent, theme === 'dark' && styles.darkContainer]}>
         <ActivityIndicator size="large" color="#6A5ACD" />
       </View>
     );
@@ -68,16 +67,16 @@ const HomeScreen = ({ navigation }) => {
   // Header component chứa tất cả nội dung trước đây trong ScrollView
   const HeaderComponent = () => (
     <>
-      <Text style={[styles.title, theme === "dark" && styles.darkText]}>
+      <Text style={[styles.title, theme === 'dark' && styles.darkText]}>
         {language === "vi" ? "Chào mừng đến với cửa hàng của Nhóm 15" : "Welcome to the store"}
       </Text>
-
+      
       {/* Thanh tìm kiếm */}
       <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, theme === "dark" && styles.darkInput]}
-          placeholder={language === "vi" ? "Tìm kiếm..." : "Search..."}
-          placeholderTextColor={theme === "dark" ? "#777" : "#999"}
+          style={[styles.searchInput, theme === 'dark' && styles.darkInput]}
+          placeholder={language === "vi" ? "Tìm kiếm sản phẩm..." : "Search products..."}
+          placeholderTextColor={theme === 'dark' ? '#999' : '#999'}
           value={query}
           onChangeText={setQuery}
         />
@@ -93,12 +92,9 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("Pants")}
         >
           <View style={styles.categoryIcon}>
-          <Image
-              source={require('../assets/icons/pants_icon.png')}
-              style={styles.iconImage}
-            />
+            <Icon name="accessibility" size={24} color="#FFFFFF" />
           </View>
-          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
             {language === "vi" ? "Quần" : "Pants"}
           </Text>
         </TouchableOpacity>
@@ -108,12 +104,9 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("Shirts")}
         >
           <View style={styles.categoryIcon}>
-          <Image
-              source={require('../assets/icons/shirts_icon.png')}
-              style={styles.iconImage}
-            />
+            <Icon name="checkroom" size={24} color="#FFFFFF" />
           </View>
-          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
             {language === "vi" ? "Áo" : "Shirts"}
           </Text>
         </TouchableOpacity>
@@ -123,12 +116,9 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("ShoesScreen")}
         >
           <View style={styles.categoryIcon}>
-          <Image
-              source={require('../assets/icons/shoes_icon.png')}
-              style={styles.iconImage}
-            />
+            <Icon name="snowshoeing" size={24} color="#FFFFFF" />
           </View>
-          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
             {language === "vi" ? "Giày" : "Shoes"}
           </Text>
         </TouchableOpacity>
@@ -138,12 +128,9 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("BagsScreen")}
         >
           <View style={styles.categoryIcon}>
-          <Image
-              source={require('../assets/icons/bag_icon.png')}
-              style={styles.iconImage}
-            />
+            <Icon name="work" size={24} color="#FFFFFF" />
           </View>
-          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
             {language === "vi" ? "Túi" : "Bags"}
           </Text>
         </TouchableOpacity>
@@ -156,45 +143,53 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("DressScreen")}
         >
           <View style={styles.categoryIcon}>
-            <Image
-              source={require('../assets/icons/dress_icon.png')}
-              style={styles.iconImage}
-            />
+            <Icon name="woman" size={24} color="#FFFFFF" />
           </View>
-          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
             {language === "vi" ? "Váy" : "Dress"}
           </Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Nút lịch sử đơn hàng */}
+      <TouchableOpacity 
+        style={styles.historyButton}
+        onPress={() => navigation.navigate("OrderHistory")}
+      >
+        <Icon name="history" size={24} color="#FFFFFF" />
+        <Text style={styles.historyButtonText}>
+          {language === "vi" ? "Lịch sử đơn hàng" : "Order History"}
+        </Text>
+      </TouchableOpacity>
 
       {/* Sản phẩm nổi bật */}
       <View style={styles.productSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Icon name="star" size={24} color="#FFD700" />
-            <Text style={[styles.sectionTitle, theme === "dark" && styles.darkText]}>
+            <Icon name="star" size={24} color="#FFC107" />
+            <Text style={[styles.sectionTitle, theme === 'dark' && styles.darkText]}>
               {language === "vi" ? " Sản phẩm nổi bật" : " Top Rated Products"}
             </Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity 
             style={styles.viewAllButton}
             onPress={() => navigation.navigate("TopRated")}
           >
             <Text style={styles.viewAllText}>
               {language === "vi" ? "Xem tất cả" : "View all"}
             </Text>
-            <Icon name="arrow-forward" size={16} color="#6A5ACD" />
+            <Icon name="chevron-right" size={16} color="#6A5ACD" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.productList}>
           {topRatedProducts.slice(0, 3).map((item, index) => (
-            <TouchableOpacity
-              key={index}
+            <TouchableOpacity 
+              key={index} 
               style={styles.productItem}
               onPress={() => navigation.navigate("ProductDetail", { product: item })}
             >
-              <Text style={[styles.productName, theme === "dark" && styles.darkText]}>
+              <Text style={[styles.productName, theme === 'dark' && styles.darkText]}>
                 {item.title}
               </Text>
               <Text style={styles.productPrice}>
@@ -214,11 +209,9 @@ const HomeScreen = ({ navigation }) => {
 
     const sendMessage = async () => {
       if (!input.trim()) return;
-      
       // Thêm tin nhắn người dùng vào danh sách
       const userMessage = { role: "user", content: input };
       setMessages(prev => [...prev, userMessage]);
-
       try {
         // Gọi API từ server backend của bạn
         const response = await fetch(
@@ -231,7 +224,6 @@ const HomeScreen = ({ navigation }) => {
             body: JSON.stringify({ question: input }),
           }
         );
-        
         const data = await response.json();
         const assistantReply = data.answer;
         setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
@@ -246,69 +238,71 @@ const HomeScreen = ({ navigation }) => {
     };
 
     return (
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
+      <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.chatContainer}
       >
-        <View style={styles.chatContainer}>
-          {/* Phần hiển thị tin nhắn */}
-          <FlatList
-            data={messages}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View style={[
-                styles.message, 
+        {/* Phần hiển thị tin nhắn */}
+        <FlatList
+          data={messages}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View 
+              style={[
+                styles.message,
                 item.role === "user" ? styles.userMessage : styles.assistantMessage
-              ]}>
-                <Text style={item.role === "user" ? styles.userMessageText : styles.assistantMessageText}>
-                  {item.content}
-                </Text>
-              </View>
-            )}
-            style={styles.messageList}
+              ]}
+            >
+              <Text 
+                style={
+                  item.role === "user" 
+                    ? styles.userMessageText 
+                    : styles.assistantMessageText
+                }
+              >
+                {item.content}
+              </Text>
+            </View>
+          )}
+          style={styles.messageList}
+        />
+
+        {/* Phần nhập tin nhắn (fixed ở cuối) */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder={language === "vi" ? "Nhập tin nhắn..." : "Type a message..."}
+            value={input}
+            onChangeText={setInput}
+            multiline
           />
-          
-          {/* Phần nhập tin nhắn (fixed ở cuối) */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Nhập tin nhắn..."
-              value={input}
-              onChangeText={setInput}
-              multiline
-            />
-            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-              <Text style={styles.sendButtonText}>Gửi</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+            <Text style={styles.sendButtonText}>Gửi</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     );
   };
 
   return (
-    <View style={[styles.container, theme === "dark" && styles.darkContainer]}>
+    <View style={[styles.container, theme === 'dark' && styles.darkContainer]}>
       <FlatList
-        style={{ flex: 1 }}
-        data={[{ key: 'main' }]}
-        renderItem={() => null}
-        ListHeaderComponent={<HeaderComponent />}
+        data={[]}
+        renderItem={null}
+        ListHeaderComponent={HeaderComponent}
         keyExtractor={item => item.key}
       />
-
+      
       {/* Nút nhỏ hỗ trợ trực tuyến */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={toggleChat}
-      >
-        <Icon name="chat" size={24} color="#fff" />
+      <TouchableOpacity style={styles.floatingButton} onPress={toggleChat}>
+        <Icon name="chat" size={30} color="#FFFFFF" />
       </TouchableOpacity>
-
+      
       {/* Modal hiển thị ChatBox khi nút được nhấn */}
       <Modal
         visible={chatVisible}
-        transparent={true}
         animationType="slide"
+        transparent={true}
         onRequestClose={() => setChatVisible(false)}
       >
         <View style={styles.modalContainer}>
@@ -590,6 +584,28 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  // Thêm styles cho nút lịch sử đơn hàng
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6A5ACD',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginVertical: 15,
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  historyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

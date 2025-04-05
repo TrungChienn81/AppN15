@@ -21,11 +21,12 @@ import TopRatedScreen from "../screens/TopRatedScreen";
 import PaymentScreen from "../screens/PaymentScreen";
 import OrderConfirmationScreen from "../screens/OrderConfirmationScreen";
 import OrderTrackingScreen from "../screens/OrderTrackingScreen";
+import HistoryOrderScreen from '../screens/HistoryOrderScreen';
 // Other screens
 import DressScreen from "../screens/DressScreen";
 import ShoesScreen from "../screens/ShoesScreen";
 import BagsScreen from "../screens/BagsScreen";
-
+import AdminOrderScreen from '../screens/AdminOrderScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -38,11 +39,17 @@ const HomeStack = () => {
         component={HomeScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Search" 
-        component={SearchScreen} 
-        options={{ headerShown: false }} 
+      <Stack.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="OrderHistory"
+        component={HistoryOrderScreen}
+        options={{ headerShown: false }}
+      />
+
       <Stack.Screen
         name="ProductDetail"
         component={ProductDetailScreen}
@@ -51,6 +58,11 @@ const HomeStack = () => {
           title: language === "vi" ? "Chi tiết sản phẩm" : "Product Detail",
           headerBackTitle: language === "vi" ? "Quay lại" : "Back"
         }}
+      />
+      <Stack.Screen
+        name="AdminOrder"
+        component={AdminOrderScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="TopRated"
@@ -207,24 +219,12 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        {isLoggedIn ? (
-          <Stack.Screen
-            name="Main"
-            component={MainTabs}
-            options={{ headerShown: false }}
-          />
-        ) : (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isLoggedIn ? (
           <>
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{
-                headerShown: false
-              }}
-            />
-            <Stack.Screen
-              name="Register"
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen 
+              name="Register" 
               component={RegisterScreen}
               options={{
                 headerShown: true,
@@ -233,6 +233,8 @@ const AppNavigator = () => {
               }}
             />
           </>
+        ) : (
+          <Stack.Screen name="Main" component={MainTabs} />
         )}
       </Stack.Navigator>
     </NavigationContainer>

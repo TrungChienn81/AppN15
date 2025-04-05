@@ -26,12 +26,10 @@ const OrderTrackingScreen = ({ route, navigation }) => {
       setLoading(false);
       return;
     }
-    
+
     fetchOrderDetails();
-    
     // Tự động cập nhật trạng thái mỗi 60 giây
     const intervalId = setInterval(fetchOrderDetails, 60000);
-    
     return () => clearInterval(intervalId);
   }, [orderId]);
 
@@ -40,9 +38,8 @@ const OrderTrackingScreen = ({ route, navigation }) => {
       if (!orderId) {
         throw new Error(language === "vi" ? "Không có mã đơn hàng" : "Order ID is missing");
       }
-      
+
       setLoading(true);
-      
       // Lấy token và userId từ AsyncStorage
       const token = await AsyncStorage.getItem('accessToken');
       const userId = await AsyncStorage.getItem('userId');
@@ -50,7 +47,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
       if (!token || !userId) {
         throw new Error(language === "vi" ? 'Yêu cầu đăng nhập' : 'Authentication required');
       }
-      
+
       console.log("Fetching orders for user");
       console.log("Looking for order ID:", orderId);
       
@@ -63,16 +60,15 @@ const OrderTrackingScreen = ({ route, navigation }) => {
           'x-client-id': userId
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`${language === "vi" ? 'Không thể tải thông tin đơn hàng' : 'Failed to fetch orders'}: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("API response data type:", typeof data, "Is array:", Array.isArray(data));
       
       let orders = [];
-      
       // Kiểm tra cấu trúc dữ liệu phản hồi
       if (Array.isArray(data)) {
         orders = data;
@@ -91,34 +87,50 @@ const OrderTrackingScreen = ({ route, navigation }) => {
           throw new Error(language === "vi" ? 'Định dạng dữ liệu không hợp lệ' : 'Invalid data format');
         }
       }
-      
+
       console.log("Order IDs in response:", orders.map(o => o._id));
       
       // Làm sạch orderId để đảm bảo không có khoảng trắng
       const cleanOrderId = orderId.trim();
       
-      // Tìm đơn hàng với hai phương pháp: so sánh chính xác và includes
-      let foundOrder = orders.find(order => order._id === cleanOrderId);
+      // Tìm đơn hàng với nhiều phương pháp khác nhau
+      let foundOrder = null;
       
-      // Nếu không tìm thấy, thử so sánh không phân biệt hoa thường
+      // Phương pháp 1: So sánh trực tiếp với _id
+      foundOrder = orders.find(order => order._id === cleanOrderId);
+      
+      // Phương pháp 2: So sánh không phân biệt hoa thường
       if (!foundOrder) {
         foundOrder = orders.find(order => 
           order._id.toLowerCase() === cleanOrderId.toLowerCase()
         );
       }
       
-      // Nếu không tìm thấy, thử tìm các đơn hàng mới nhất
+      // Phương pháp 3: Kiểm tra các trường khác có thể chứa ID
+      if (!foundOrder) {
+        foundOrder = orders.find(order => {
+          const orderNumber = order.orderNumber || order.vnpTxnRef;
+          return orderNumber && orderNumber === cleanOrderId;
+        });
+      }
+      
+      // Phương pháp 4: Nếu vẫn không tìm thấy, kiểm tra ID là một phần của _id
+      if (!foundOrder) {
+        foundOrder = orders.find(order => order._id.includes(cleanOrderId));
+      }
+      
+      // Nếu không tìm thấy, sử dụng đơn hàng mới nhất
       if (!foundOrder && orders.length > 0) {
         console.log("Order not found, using the most recent order instead");
         // Sắp xếp theo thời gian và lấy đơn hàng mới nhất
         orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         foundOrder = orders[0];
       }
-      
+
       if (!foundOrder) {
         throw new Error(language === "vi" ? 'Không tìm thấy đơn hàng' : 'Order not found');
       }
-      
+
       console.log("Found order:", foundOrder._id);
       setOrderDetails(foundOrder);
       setError(null);
@@ -137,26 +149,27 @@ const OrderTrackingScreen = ({ route, navigation }) => {
       case 'processing': return 2;
       case 'shipped': return 3;
       case 'delivered': return 4;
-      case 'cancelled': return 0; // Trường hợp đặc biệt cho đơn bị hủy
+      case 'cancel': return 0; // Trường hợp đặc biệt cho đơn bị hủy
+      case 'cancelled': return 0; // Phòng trường hợp tên trạng thái khác nhau
       default: return 1;
     }
   };
 
   // Hiển thị timeline theo dõi đơn hàng
   const renderTrackingTimeline = () => {
-    if (!orderDetails || orderDetails.status === 'cancelled') {
+    if (!orderDetails || orderDetails.status === 'cancel' || orderDetails.status === 'cancelled') {
       return null;
     }
-    
+
     const steps = [
       { id: 1, title: language === "vi" ? "Đã đặt hàng" : "Order Placed" },
       { id: 2, title: language === "vi" ? "Đang xử lý" : "Processing" },
       { id: 3, title: language === "vi" ? "Đang giao" : "Shipping" },
       { id: 4, title: language === "vi" ? "Đã giao hàng" : "Delivered" }
     ];
-    
+
     const currentStep = getStepNumber(orderDetails.status);
-    
+
     return (
       <View style={styles.timelineContainer}>
         {steps.map((step) => (
@@ -168,7 +181,10 @@ const OrderTrackingScreen = ({ route, navigation }) => {
               {step.id < currentStep ? (
                 <Icon name="check" size={14} color="#FFFFFF" />
               ) : (
-                <Text style={step.id <= currentStep ? styles.completedStepText : styles.pendingStepText}>
+                <Text style={[
+                  styles.stepText,
+                  step.id <= currentStep ? styles.completedStepText : styles.pendingStepText
+                ]}>
                   {step.id}
                 </Text>
               )}
@@ -256,11 +272,14 @@ const OrderTrackingScreen = ({ route, navigation }) => {
         <View style={styles.placeholder} />
       </View>
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Thông tin đơn hàng */}
         <View style={[styles.orderHeader, theme === 'dark' && styles.darkCardContainer]}>
           <View style={styles.orderIdContainer}>
-            <Text style={[styles.orderIdLabel, theme === 'dark' && styles.darkText]}>
+            <Text style={[styles.orderIdLabel, theme === 'dark' && styles.darkSubText]}>
               {language === "vi" ? "Mã đơn hàng:" : "Order ID:"}
             </Text>
             <Text style={[styles.orderId, theme === 'dark' && styles.darkText]}>
@@ -270,35 +289,36 @@ const OrderTrackingScreen = ({ route, navigation }) => {
           <View style={styles.statusContainer}>
             <Text style={[
               styles.statusBadge,
-              orderDetails?.status === 'delivered' && styles.deliveredBadge,
-              orderDetails?.status === 'cancelled' && styles.cancelledBadge,
-              orderDetails?.status === 'shipped' && styles.shippedBadge,
-              orderDetails?.status === 'processing' && styles.processingBadge,
               orderDetails?.status === 'pending' && styles.pendingBadge,
+              orderDetails?.status === 'processing' && styles.processingBadge,
+              orderDetails?.status === 'shipped' && styles.shippedBadge,
+              orderDetails?.status === 'delivered' && styles.deliveredBadge,
+              (orderDetails?.status === 'cancel' || orderDetails?.status === 'cancelled') && styles.cancelledBadge
             ]}>
               {orderDetails?.status === 'pending' && (language === "vi" ? "Chờ xác nhận" : "Pending")}
               {orderDetails?.status === 'processing' && (language === "vi" ? "Đang xử lý" : "Processing")}
               {orderDetails?.status === 'shipped' && (language === "vi" ? "Đang giao" : "Shipping")}
               {orderDetails?.status === 'delivered' && (language === "vi" ? "Đã giao" : "Delivered")}
-              {orderDetails?.status === 'cancelled' && (language === "vi" ? "Đã hủy" : "Cancelled")}
+              {(orderDetails?.status === 'cancel' || orderDetails?.status === 'cancelled') && (language === "vi" ? "Đã hủy" : "Cancelled")}
             </Text>
           </View>
         </View>
-
+        
         {/* Timeline theo dõi đơn hàng */}
         <View style={[styles.trackingSection, theme === 'dark' && styles.darkCardContainer]}>
           <Text style={[styles.sectionTitle, theme === 'dark' && styles.darkText]}>
             {language === "vi" ? "Theo dõi đơn hàng" : "Order Tracking"}
           </Text>
-          {orderDetails?.status === 'cancelled' ? (
+          
+          {(orderDetails?.status === 'cancel' || orderDetails?.status === 'cancelled') ? (
             <View style={styles.cancelledContainer}>
-              <Icon name="times-circle" size={48} color="#FF6B6B" />
+              <Icon name="times-circle" size={50} color="#E53935" />
               <Text style={styles.cancelledText}>
                 {language === "vi" ? "Đơn hàng đã bị hủy" : "Order has been cancelled"}
               </Text>
               <Text style={styles.cancelledSubText}>
                 {language === "vi" 
-                  ? "Vui lòng liên hệ với chúng tôi nếu có thắc mắc."
+                  ? "Vui lòng liên hệ với chúng tôi nếu có thắc mắc." 
                   : "Please contact us if you have any questions."}
               </Text>
             </View>
@@ -312,7 +332,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
                 {language === "vi" ? "Ngày đặt hàng:" : "Order Date:"}
               </Text>
               <Text style={[styles.deliveryInfoValue, theme === 'dark' && styles.darkText]}>
-                {orderDetails?.createdAt 
+                {orderDetails?.createdAt
                   ? new Date(orderDetails.createdAt).toLocaleString()
                   : "---"}
               </Text>
@@ -328,7 +348,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
             </View>
           </View>
         </View>
-
+        
         {/* Thông tin sản phẩm đã đặt */}
         <View style={[styles.itemsSection, theme === 'dark' && styles.darkCardContainer]}>
           <Text style={[styles.sectionTitle, theme === 'dark' && styles.darkText]}>
@@ -337,8 +357,12 @@ const OrderTrackingScreen = ({ route, navigation }) => {
           
           {orderDetails?.cart?.map((item, index) => (
             <View 
-              key={`${item.product._id || item.product}-${index}`} 
-              style={[styles.itemRow, index < orderDetails.cart.length - 1 && styles.itemBorder]}
+              key={index} 
+              style={[
+                styles.itemRow, 
+                index < orderDetails.cart.length - 1 && styles.itemBorder,
+                theme === 'dark' && { borderBottomColor: '#333' }
+              ]}
             >
               <View style={styles.itemDetails}>
                 <Text style={[styles.itemName, theme === 'dark' && styles.darkText]}>
@@ -380,13 +404,13 @@ const OrderTrackingScreen = ({ route, navigation }) => {
               <Text style={[styles.grandTotalLabel, theme === 'dark' && styles.darkText]}>
                 {language === "vi" ? "Tổng thanh toán:" : "Total:"}
               </Text>
-              <Text style={styles.grandTotalValue}>
+              <Text style={[styles.grandTotalValue, theme === 'dark' && styles.darkText]}>
                 {orderDetails?.totalAmount?.toLocaleString() || "0"} đ
               </Text>
             </View>
           </View>
         </View>
-
+        
         {/* Thông tin giao hàng */}
         <View style={[styles.deliverySection, theme === 'dark' && styles.darkCardContainer]}>
           <Text style={[styles.sectionTitle, theme === 'dark' && styles.darkText]}>
@@ -425,9 +449,11 @@ const OrderTrackingScreen = ({ route, navigation }) => {
               {language === "vi" ? "Phương thức thanh toán:" : "Payment Method:"}
             </Text>
             <Text style={[styles.deliveryDetailValue, theme === 'dark' && styles.darkText]}>
-              {orderDetails?.paymentMethod === 'cash' 
+              {orderDetails?.paymentMethod === 'cash'
                 ? (language === "vi" ? "Thanh toán khi nhận hàng" : "Cash on Delivery")
-                : (orderDetails?.paymentMethod || "---")}
+                : (orderDetails?.paymentMethod === 'vnpay' 
+                    ? "VNPAY" 
+                    : (orderDetails?.paymentMethod || "---"))}
             </Text>
           </View>
         </View>

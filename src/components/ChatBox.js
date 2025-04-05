@@ -9,12 +9,12 @@ const ChatBox = () => {
   const sendMessage = async () => {
     if (!input.trim()) return;
     
-    // Thêm tin nhắn người dùng vào danh sách
+   
     const userMessage = { role: "user", content: input };
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Gọi API từ server backend của bạn
+      
       const response = await axios.post(
         "http://10.0.2.2:3055/v1/api/chatbot/query",
         { question: input },
