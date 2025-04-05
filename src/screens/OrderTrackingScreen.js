@@ -231,7 +231,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
             <Icon name="arrow-left" size={20} color={theme === 'dark' ? '#FFFFFF' : '#000000'} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, theme === 'dark' && styles.darkText]}>
-            {language === "vi" ? "Theo dõi đơn hàng" : "Order Tracking"}
+            {language === "vi" ? "Chi tiết đơn hàng" : "Order Details"}
           </Text>
           <View style={styles.placeholder} />
         </View>
@@ -267,7 +267,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
           <Icon name="arrow-left" size={20} color={theme === 'dark' ? '#FFFFFF' : '#000000'} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, theme === 'dark' && styles.darkText]}>
-          {language === "vi" ? "Theo dõi đơn hàng" : "Order Tracking"}
+          {language === "vi" ? "Chi tiết đơn hàng" : "Order Tracking"}
         </Text>
         <View style={styles.placeholder} />
       </View>
@@ -279,12 +279,21 @@ const OrderTrackingScreen = ({ route, navigation }) => {
         {/* Thông tin đơn hàng */}
         <View style={[styles.orderHeader, theme === 'dark' && styles.darkCardContainer]}>
           <View style={styles.orderIdContainer}>
-            <Text style={[styles.orderIdLabel, theme === 'dark' && styles.darkSubText]}>
-              {language === "vi" ? "Mã đơn hàng:" : "Order ID:"}
-            </Text>
-            <Text style={[styles.orderId, theme === 'dark' && styles.darkText]}>
-              {orderDetails?._id || orderId || "---"}
-            </Text>
+            <View>
+              <Text style={[styles.orderIdLabel, theme === 'dark' && styles.darkSubText]}>
+                {language === "vi" ? "Mã đơn hàng:" : "Order ID:"}
+              </Text>
+              <View style={styles.orderIdRow}>
+                <Text style={[styles.orderId, theme === 'dark' && styles.darkText]}>
+                  {orderDetails?._id || orderId || "---"}
+                </Text>
+                {orderDetails?.paymentMethod === 'vnpay' && (
+                  <View style={styles.vnpayBadge}>
+                    <Text style={styles.vnpayText}>VNPAY</Text>
+                  </View>
+                )}
+              </View>
+            </View>
           </View>
           <View style={styles.statusContainer}>
             <Text style={[
@@ -570,6 +579,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  orderIdRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  vnpayBadge: {
+    backgroundColor: '#9C27B0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  vnpayText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '600',
   },
   statusContainer: {
     alignItems: 'flex-end',
