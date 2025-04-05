@@ -101,7 +101,7 @@ const LoginScreen = ({ navigation, route }) => {
           <Icon
             name="user-circle"
             size={100}
-            color={theme === "dark" ? "#FFFFFF" : "#000000"}
+            color={theme === "purple" ? "#A020F0" : "#A020F0"}
           />
           <Text style={[styles.title, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Đăng Nhập" : "Login"}

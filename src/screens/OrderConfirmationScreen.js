@@ -40,15 +40,37 @@ const OrderConfirmationScreen = ({ navigation, route }) => {
   const handleTrackOrder = () => {
     if (!orderDetails.orderNumber) {
       console.log("Order number is missing");
-      alert(language === "vi" ? "Không tìm thấy mã đơn hàng" : "Order number not found");
+      
+      // Nếu có items, lấy đơn hàng gần nhất từ lịch sử
+      if (orderDetails.items && orderDetails.items.length > 0) {
+        Alert.alert(
+          language === "vi" ? "Thông báo" : "Notification",
+          language === "vi" 
+            ? "Mã đơn hàng không tìm thấy. Bạn có muốn xem lịch sử đơn hàng?" 
+            : "Order number not found. Do you want to view order history?",
+          [
+            {
+              text: language === "vi" ? "Hủy" : "Cancel",
+              style: "cancel"
+            },
+            {
+              text: language === "vi" ? "Xem" : "View",
+              onPress: () => navigation.navigate("OrderHistory")
+            }
+          ]
+        );
+      } else {
+        alert(language === "vi" ? "Không tìm thấy mã đơn hàng" : "Order number not found");
+      }
       return;
     }
-    
+  
     console.log("Navigating to order tracking with ID:", orderDetails.orderNumber);
     navigation.navigate("OrderTracking", {
       orderId: orderDetails.orderNumber
     });
   };
+  
 
   return (
     <SafeAreaView style={[styles.container, theme === 'dark' && styles.darkContainer]}>

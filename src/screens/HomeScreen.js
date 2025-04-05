@@ -85,16 +85,18 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Các nút danh mục */}
       <View style={styles.categoryContainer}>
         <TouchableOpacity 
           style={styles.categoryButton}
           onPress={() => navigation.navigate("Pants")}
         >
           <View style={styles.categoryIcon}>
-            <Icon name="accessibility" size={24} color="#FFFFFF" />
+          <Image
+              source={require('../assets/icons/pants_icon.png')}
+              style={styles.iconImage}
+            />
           </View>
-          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Quần" : "Pants"}
           </Text>
         </TouchableOpacity>
@@ -104,9 +106,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("Shirts")}
         >
           <View style={styles.categoryIcon}>
-            <Icon name="checkroom" size={24} color="#FFFFFF" />
+          <Image
+              source={require('../assets/icons/shirts_icon.png')}
+              style={styles.iconImage}
+            />
           </View>
-          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Áo" : "Shirts"}
           </Text>
         </TouchableOpacity>
@@ -116,9 +121,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("ShoesScreen")}
         >
           <View style={styles.categoryIcon}>
-            <Icon name="snowshoeing" size={24} color="#FFFFFF" />
+          <Image
+              source={require('../assets/icons/shoes_icon.png')}
+              style={styles.iconImage}
+            />
           </View>
-          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Giày" : "Shoes"}
           </Text>
         </TouchableOpacity>
@@ -128,9 +136,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("BagsScreen")}
         >
           <View style={styles.categoryIcon}>
-            <Icon name="work" size={24} color="#FFFFFF" />
+          <Image
+              source={require('../assets/icons/bag_icon.png')}
+              style={styles.iconImage}
+            />
           </View>
-          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Túi" : "Bags"}
           </Text>
         </TouchableOpacity>
@@ -143,13 +154,17 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("DressScreen")}
         >
           <View style={styles.categoryIcon}>
-            <Icon name="woman" size={24} color="#FFFFFF" />
+            <Image
+              source={require('../assets/icons/dress_icon.png')}
+              style={styles.iconImage}
+            />
           </View>
-          <Text style={[styles.categoryText, theme === 'dark' && styles.darkText]}>
+          <Text style={[styles.categoryText, theme === "dark" && styles.darkText]}>
             {language === "vi" ? "Váy" : "Dress"}
           </Text>
         </TouchableOpacity>
       </View>
+
       
       {/* Nút lịch sử đơn hàng */}
       <TouchableOpacity 

@@ -41,10 +41,10 @@ const HistoryOrderScreen = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Kiểm tra trạng thái đăng nhập
+ 
       const loggedIn = await checkLoginStatus();
       if (!loggedIn) {
-        // Thử lấy dữ liệu từ cache nếu có
+      
         const cachedOrders = await AsyncStorage.getItem('cachedOrdersData');
         if (cachedOrders) {
           setOrders(JSON.parse(cachedOrders));
@@ -61,11 +61,10 @@ const HistoryOrderScreen = ({ navigation }) => {
         return;
       }
       
-      // Lấy token và userId từ AsyncStorage
+  
       const token = await AsyncStorage.getItem('accessToken');
       const userId = await AsyncStorage.getItem('userId');
       
-      // Đảm bảo token có định dạng đúng
       const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       
       console.log("Making API request with token and userId");
@@ -291,7 +290,13 @@ const HistoryOrderScreen = ({ navigation }) => {
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={[styles.orderItem, theme === 'dark' && styles.darkCardContainer]}
-              onPress={() => navigation.navigate("OrderTracking", { orderId: item._id })}
+              onPress={() => navigation.navigate('Main', {
+                screen: 'CartStack',
+                params: {
+                  screen: 'OrderTracking',
+                  params: { orderId: item._id }
+                }
+              })}
             >
               <View style={styles.orderHeader}>
                 <View>
@@ -323,18 +328,6 @@ const HistoryOrderScreen = ({ navigation }) => {
                     {item.totalAmount?.toLocaleString() || "0"} đ
                   </Text>
                 </View>
-              </View>
-              
-              <View style={styles.actionContainer}>
-                <TouchableOpacity 
-                  style={styles.trackButton}
-                  onPress={() => navigation.navigate("OrderTracking", { orderId: item._id })}
-                >
-                  <Icon name="map-marker-alt" size={15} color="#FFFFFF" />
-                  <Text style={styles.trackButtonText}>
-                    {language === "vi" ? "Theo dõi đơn hàng" : "Track Order"}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           )}
